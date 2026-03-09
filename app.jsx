@@ -25,6 +25,8 @@ function App() {
   const [disabledOptions, setDisabledOptions] = useState([]);
   const [failedQuestions, setFailedQuestions] = useState([]);
   const timeoutRef = useRef(null);
+  const sfxCorrect = useRef(new Audio("music/Correcto.mp3"));
+  const sfxError = useRef(new Audio("music/Error.mp3"));
 
   const totalQuestions = questions.length;
 
@@ -139,6 +141,13 @@ function App() {
     setDisabledOptions([]);
   }
 
+  function playSound(ref) {
+    try {
+      ref.current.currentTime = 0;
+      ref.current.play();
+    } catch (_) { }
+  }
+
   function triggerConfetti() {
     if (typeof confetti !== "function") return;
     confetti({
@@ -156,6 +165,7 @@ function App() {
     const isCorrect = option.isCorrect;
     if (isCorrect) {
       setFeedback({ type: "correct", message: "¡Correcto!" });
+      playSound(sfxCorrect);
       const pts = Math.round(100 / questions.length);
       setScore((s) => s + (disabledOptions.length === 0 ? pts : 0));
       if (disabledOptions.length === 0) setCorrectCount((c) => c + 1);
@@ -176,6 +186,7 @@ function App() {
         });
       }
       setFeedback({ type: "wrong", message: "Incorrecto. ¡Intenta de nuevo!" });
+      playSound(sfxError);
       setWrongCount((c) => c + 1);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
