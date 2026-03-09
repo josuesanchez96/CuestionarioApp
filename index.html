@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Cuestionario desde Excel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- React 18 -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- Babel para JSX en el navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- SheetJS para leer Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- canvas-confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+  <div id="root">Cargando...</div>
+
+  <script>
+    (function () {
+      var missing = [];
+      if (typeof React === "undefined") missing.push("React");
+      if (typeof ReactDOM === "undefined") missing.push("ReactDOM");
+      if (typeof XLSX === "undefined") missing.push("SheetJS (XLSX)");
+      if (typeof confetti === "undefined") missing.push("canvas-confetti");
+      if (typeof Babel === "undefined") missing.push("Babel");
+
+      if (missing.length) {
+        var root = document.getElementById("root");
+        root.innerHTML =
+          '<div style="font-family: system-ui, Segoe UI, sans-serif; padding: 16px; max-width: 720px; margin: 24px auto; border: 1px solid rgba(0,0,0,.15); border-radius: 12px;">' +
+          "<h2 style=\"margin:0 0 8px;\">No se pudieron cargar librerías</h2>" +
+          "<p style=\"margin:0 0 8px;\">Faltan: <b>" +
+          missing.join(", ") +
+          "</b></p>" +
+          "<p style=\"margin:0;\">Asegúrate de tener internet y vuelve a abrir <code>index.html</code>. Si prefieres, puedes ejecutar un servidor local (por ejemplo, Live Server) y abrir la app desde <code>http://localhost</code>.</p>" +
+          "</div>";
+      }
+    })();
+  </script>
+
+  <script type="text/babel" data-presets="env,react">
+    if (!window.React || !window.ReactDOM || !window.XLSX) {
+      // Si faltan librerías, dejamos el mensaje de diagnóstico.
+    } else {
+      const { useState, useEffect, useMemo, useRef } = React;
+
+      function shuffleArray(array) {
+        const arr = [...array];
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+      }
+
+      function App() {
+        const [rawRows, setRawRows] = useState([]); // {answer, question}
+        const [questions, setQuestions] = useState([]);
+        const [currentIndex, setCurrentIndex] = useState(0);
+        const [options, setOptions] = useState([]);
+        const [selectedOption, setSelectedOption] = useState(null);
+        const [feedback, setFeedback] = useState(null);
+        const [score, setScore] = useState(0);
+        const [correctCount, setCorrectCount] = useState(0);
+        const [wrongCount, setWrongCount] = useState(0);
+        const [gameStarted, setGameStarted] = useState(false);
+        const [gameOver, setGameOver] = useState(false);
+        const [loadingFile, setLoadingFile] = useState(false);
+        const [disabledOptions, setDisabledOptions] = useState([]);
+        const [failedQuestions, setFailedQuestions] = useState([]);
+        const timeoutRef = useRef(null);
+
+        const totalQuestions = questions.length;
+
+        const progressPercent = useMemo(() => {
+          if (!totalQuestions) return 0;
+          return ((currentIndex + 1) / totalQuestions) * 100;
+        }, [currentIndex, totalQuestions]);
+
+        useEffect(() => {
+          if (questions.length > 0 && currentIndex < questions.length) {
+            prepareOptionsForCurrentQuestion();
+          } else {
+            setOptions([]);
+          }
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [questions, currentIndex]);
+
+        useEffect(() => {
+          return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          };
+        }, []);
+
+        function handleFileChange(e) {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setLoadingFile(true);
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            try {
+              const data = evt.target.result;
+              const workbook = XLSX.read(data, { type: "array" });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+              const parsed = rows
+                .filter(
+                  (row) =>
+                    Array.isArray(row) &&
+                    row.length >= 2 &&
+                    row[0] != null &&
+                    row[1] != null &&
+                    String(row[1]).trim() !== ""
+                )
+                .map((row) => ({
+                  answer: String(row[0]).trim(),
+                  question: String(row[1]).trim(),
+                }));
+
+              if (parsed.length < 2) {
+                alert(
+                  "El archivo debe tener al menos dos filas válidas con respuesta (columna 1) y pregunta (columna 2)."
+                );
+                setLoadingFile(false);
+                return;
+              }
+
+              setRawRows(parsed);
+              const shuffled = shuffleArray(parsed);
+              setQuestions(shuffled);
+              setCurrentIndex(0);
+              setScore(0);
+              setCorrectCount(0);
+              setWrongCount(0);
+              setGameOver(false);
+              setGameStarted(true);
+              setSelectedOption(null);
+              setFeedback(null);
+            } catch (error) {
+              console.error(error);
+              alert("Hubo un problema al leer el archivo Excel.");
+            } finally {
+              setLoadingFile(false);
+            }
+          };
+          reader.onerror = () => {
+            alert("No se pudo leer el archivo.");
+            setLoadingFile(false);
+          };
+
+          reader.readAsArrayBuffer(file);
+          e.target.value = "";
+        }
+
+        function prepareOptionsForCurrentQuestion() {
+          const current = questions[currentIndex];
+          if (!current) return;
+
+          const otherAnswers = questions
+            .filter((_, idx) => idx !== currentIndex)
+            .map((q) => q.answer)
+            .filter((a) => a !== current.answer);
+
+          // Shuffle distractors and pick up to 3
+          const shuffledOthers = shuffleArray(otherAnswers);
+          const numDistractors = Math.min(3, shuffledOthers.length);
+          const distractors = shuffledOthers.slice(0, numDistractors).map((text) => ({
+            text,
+            isCorrect: false,
+          }));
+
+          const opts = shuffleArray([
+            { text: current.answer, isCorrect: true },
+            ...distractors,
+          ]);
+
+          setOptions(opts);
+          setSelectedOption(null);
+          setFeedback(null);
+          setDisabledOptions([]);
+        }
+
+        function triggerConfetti() {
+          if (typeof confetti !== "function") return;
+          confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
+
+        function handleOptionClick(option) {
+          if (!options.length || selectedOption || disabledOptions.includes(option.text)) return;
+
+          setSelectedOption(option);
+
+          const isCorrect = option.isCorrect;
+          if (isCorrect) {
+            setFeedback({ type: "correct", message: "¡Correcto!" });
+            const pts = Math.round(100 / questions.length);
+            setScore((s) => s + (disabledOptions.length === 0 ? pts : 0));
+            if (disabledOptions.length === 0) setCorrectCount((c) => c + 1);
+            triggerConfetti();
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+              goToNextQuestion();
+            }, 1600);
+          } else {
+            // Track failed question (only first wrong attempt per question)
+            if (disabledOptions.length === 0) {
+              const current = questions[currentIndex];
+              setFailedQuestions((prev) => {
+                const alreadyTracked = prev.some(
+                  (q) => q.answer === current.answer && q.question === current.question
+                );
+                return alreadyTracked ? prev : [...prev, current];
+              });
+            }
+            setFeedback({ type: "wrong", message: "Incorrecto. ¡Intenta de nuevo!" });
+            setWrongCount((c) => c + 1);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+              setDisabledOptions((prev) => [...prev, option.text]);
+              setSelectedOption(null);
+              setFeedback(null);
+            }, 1600);
+          }
+        }
+
+        function goToNextQuestion() {
+          setCurrentIndex((idx) => {
+            if (idx + 1 >= questions.length) {
+              setGameOver(true);
+              return idx;
+            }
+            return idx + 1;
+          });
+          setSelectedOption(null);
+          setFeedback(null);
+        }
+
+        function handleRestart() {
+          if (!rawRows.length) {
+            setQuestions([]);
+            setGameStarted(false);
+            setGameOver(false);
+            setScore(0);
+            setCorrectCount(0);
+            setWrongCount(0);
+            setCurrentIndex(0);
+            setSelectedOption(null);
+            setFeedback(null);
+            setFailedQuestions([]);
+            return;
+          }
+          const shuffled = shuffleArray(rawRows);
+          setQuestions(shuffled);
+          setCurrentIndex(0);
+          setScore(0);
+          setCorrectCount(0);
+          setWrongCount(0);
+          setGameOver(false);
+          setGameStarted(true);
+          setSelectedOption(null);
+          setFeedback(null);
+          setFailedQuestions([]);
+        }
+
+        function handleReviewFailed() {
+          if (!failedQuestions.length) return;
+          const shuffled = shuffleArray(failedQuestions);
+          setQuestions(shuffled);
+          setCurrentIndex(0);
+          setScore(0);
+          setCorrectCount(0);
+          setWrongCount(0);
+          setGameOver(false);
+          setGameStarted(true);
+          setSelectedOption(null);
+          setFeedback(null);
+          setFailedQuestions([]);
+        }
+
+        const currentQuestion =
+          questions.length && currentIndex < questions.length
+            ? questions[currentIndex]
+            : null;
+
+        const successPercentage =
+          correctCount + wrongCount === 0
+            ? 0
+            : Math.round((correctCount / (correctCount + wrongCount)) * 100);
+
+        return (
+          <div className="app-root">
+            <div className="background-gradient" />
+            <div className="floating-orb orb-1" />
+            <div className="floating-orb orb-2" />
+            <div className="app-container">
+              <header className="app-header">
+                <h1>Cuestionario desde Excel</h1>
+                <p className="subtitle">
+                  Estudia tus conceptos convirtiendo tu Excel en un juego rápido.
+                </p>
+              </header>
+
+              <section className="top-bar">
+                {!gameStarted && (
+                  <div className="file-input-wrapper">
+                    <label className="file-label">
+                      <span>📁 Cargar archivo Excel</span>
+                      <input
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleFileChange}
+                      />
+                    </label>
+                    <p className="file-help">
+                      Columna 1: respuesta correcta · Columna 2: pregunta
+                    </p>
+                  </div>
+                )}
+
+                {!gameOver && (
+                  <div className="stats">
+                    <div className="stat-item">
+                      <span className="stat-label">Puntaje</span>
+                      <span className="stat-value">{score}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Aciertos</span>
+                      <span className="stat-value stat-ok">{correctCount}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Errores</span>
+                      <span className="stat-value stat-bad">{wrongCount}</span>
+                    </div>
+                    <div className="stat-item">
+                      <span className="stat-label">Progreso</span>
+                      <span className="stat-value">
+                        {totalQuestions
+                          ? `${currentIndex + 1} / ${totalQuestions}`
+                          : "-"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <section className="progress-bar-wrapper">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </section>
+
+              {!gameStarted && (
+                <section className="welcome-card">
+                  <h2>Sube tu archivo para empezar</h2>
+                  <p>
+                    El juego mostrará una pregunta y dos posibles respuestas. Una será
+                    la correcta y la otra se tomará de otra fila de tu Excel.
+                  </p>
+                  <p>
+                    Responde lo más rápido que puedas, suma puntos y revisa tus
+                    resultados al final.
+                  </p>
+                </section>
+              )}
+
+              {loadingFile && (
+                <div className="overlay-message">
+                  <div className="overlay-card">
+                    <div className="spinner" />
+                    <p>Leyendo archivo Excel...</p>
+                  </div>
+                </div>
+              )}
+
+              {gameStarted && !gameOver && currentQuestion && (
+                <main className="game-area">
+                  <div className="question-card question-enter">
+                    <div className="question-label">Pregunta</div>
+                    <div className="question-text">{currentQuestion.question}</div>
+                  </div>
+
+                  <div className="options-container">
+                    {options.map((opt, idx) => {
+                      const isSelected =
+                        selectedOption && selectedOption.text === opt.text;
+                      const isEliminated = disabledOptions.includes(opt.text);
+                      const labels = ["A", "B", "C", "D"];
+
+                      let className = "option-button";
+                      if (isEliminated) {
+                        className += " option-eliminated";
+                      } else if (isSelected && feedback?.type === "correct") {
+                        className += " option-correct option-pulse";
+                      } else if (isSelected && feedback?.type === "wrong") {
+                        className += " option-wrong option-shake";
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          className={className}
+                          onClick={() => handleOptionClick(opt)}
+                          disabled={!!selectedOption || isEliminated}
+                        >
+                          <span className="option-label">{labels[idx]}</span>
+                          {opt.text}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {feedback && (
+                    <div
+                      className={
+                        feedback.type === "correct"
+                          ? "feedback feedback-correct"
+                          : "feedback feedback-wrong"
+                      }
+                    >
+                      {feedback.message}
+                    </div>
+                  )}
+                </main>
+              )}
+
+              {gameOver && (
+                <section className="results-card">
+                  <h2>Resultados finales</h2>
+                  <div className="results-grid">
+                    <div className="result-item">
+                      <span className="result-label">Total de preguntas</span>
+                      <span className="result-value">{totalQuestions}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Aciertos</span>
+                      <span className="result-value stat-ok">{correctCount}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Errores</span>
+                      <span className="result-value stat-bad">{wrongCount}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Porcentaje de éxito</span>
+                      <span className="result-value">
+                        {successPercentage}
+                        <span className="result-unit">%</span>
+                      </span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Puntaje final</span>
+                      <span className="result-value">{score}</span>
+                    </div>
+                  </div>
+                  <div className="results-actions">
+                    <button className="restart-button" onClick={handleRestart}>
+                      Reiniciar juego
+                    </button>
+                    {failedQuestions.length > 0 && (
+                      <button className="review-button" onClick={handleReviewFailed}>
+                        🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
+                      </button>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {gameStarted && !gameOver && (
+                <div className="bottom-actions">
+                  <button className="ghost-button" onClick={handleRestart}>
+                    Reiniciar ronda
+                  </button>
+                </div>
+              )}
+
+              <footer className="app-footer">
+                <span>
+                  Carga tu Excel y convierte el estudio en un juego interactivo.
+                </span>
+              </footer>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    }
+  </script>
+</body>
+
+</html>
