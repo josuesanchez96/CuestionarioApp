@@ -75,6 +75,7 @@
         const [failedQuestions, setFailedQuestions] = useState([]);
         const [gameMode, setGameMode] = useState(null); // null | 'quiz' | 'flashcard'
         const [revealed, setRevealed] = useState(false);
+        const [confirm, setConfirm] = useState(null); // { message, onAccept }
         const timeoutRef = useRef(null);
         const sfxCorrect = useRef(new Audio("music/Correcto.mp3"));
         const sfxError = useRef(new Audio("music/Error.mp3"));
@@ -324,6 +325,14 @@
           setRevealed(false);
         }
 
+        function askConfirm(message, onAccept) {
+          setConfirm({ message, onAccept });
+        }
+
+        function closeConfirm() {
+          setConfirm(null);
+        }
+
         function handleFlashcardNext() {
           setRevealed(false);
           goToNextQuestion();
@@ -516,15 +525,20 @@
                       }
                       playSound(sfxCorrect);
                       setRevealed(true);
+                      if (currentIndex + 1 >= totalQuestions) {
+                        timeoutRef.current = setTimeout(() => handleFlashcardNext(), 1800);
+                      }
                     }}>
-                      👁️ Revelar respuesta
+                      👁️ Ver respuesta
                     </button>
                   ) : (
                     <>
                       <div className="answer-reveal">{currentQuestion.answer}</div>
-                      <button className="reveal-next-btn" onClick={handleFlashcardNext}>
-                        {currentIndex + 1 < totalQuestions ? 'Siguiente →' : '✅ Ver resultados'}
-                      </button>
+                      {currentIndex + 1 < totalQuestions && (
+                        <button className="reveal-next-btn" onClick={handleFlashcardNext}>
+                          Siguiente →
+                        </button>
+                      )}
                     </>
                   )}
                 </main>
@@ -532,12 +546,24 @@
 
               {gameStarted && !gameOver && gameMode === 'flashcard' && (
                 <div className="bottom-actions">
-                  <button className="ghost-button" onClick={handleRestart}>
+                  <button className="ghost-button" onClick={() => askConfirm('¿Reiniciar la ronda desde el principio?', handleRestart)}>
                     Reiniciar ronda
                   </button>
-                  <button className="ghost-button" onClick={handleChangeModule}>
+                  <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)}>
                     🔀 Cambiar módulo
                   </button>
+                </div>
+              )}
+
+              {confirm && (
+                <div className="confirm-overlay">
+                  <div className="confirm-card">
+                    <p className="confirm-message">{confirm.message}</p>
+                    <div className="confirm-actions">
+                      <button className="confirm-cancel" onClick={closeConfirm}>Cancelar</button>
+                      <button className="confirm-accept" onClick={() => { confirm.onAccept(); closeConfirm(); }}>Aceptar</button>
+                    </div>
+                  </div>
                 </div>
               )}
 
