@@ -27,6 +27,8 @@ function App() {
   const timeoutRef = useRef(null);
   const sfxCorrect = useRef(new Audio("music/Correcto.mp3"));
   const sfxError = useRef(new Audio("music/Error.mp3"));
+  const sfxCelebration = useRef(new Audio("music/Celebration.mp3"));
+  const celebrationUnlocked = useRef(false);
 
   const totalQuestions = questions.length;
 
@@ -49,6 +51,13 @@ function App() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
+
+  // Reproduce celebración cuando termina el juego
+  useEffect(() => {
+    if (gameOver) {
+      playSound(sfxCelebration);
+    }
+  }, [gameOver]);
 
   function handleFileChange(e) {
     const file = e.target.files?.[0];
@@ -159,6 +168,17 @@ function App() {
 
   function handleOptionClick(option) {
     if (!options.length || selectedOption || disabledOptions.includes(option.text)) return;
+    // Desbloquear audio en el primer gesto del usuario
+    if (!celebrationUnlocked.current) {
+      const unlock = sfxCelebration.current.play();
+      if (unlock !== undefined) {
+        unlock.then(() => {
+          sfxCelebration.current.pause();
+          sfxCelebration.current.currentTime = 0;
+        }).catch(() => { });
+      }
+      celebrationUnlocked.current = true;
+    }
 
     setSelectedOption(option);
 
