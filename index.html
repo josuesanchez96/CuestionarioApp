@@ -134,13 +134,13 @@
                     String(row[1]).trim() !== ""
                 )
                 .map((row) => ({
-                  answer: String(row[0]).trim(),
-                  question: String(row[1]).trim(),
+                  question: String(row[0]).trim(),
+                  answer: String(row[1]).trim(),
                 }));
 
               if (parsed.length < 2) {
                 alert(
-                  "El archivo debe tener al menos dos filas válidas con respuesta (columna 1) y pregunta (columna 2)."
+                  "El archivo debe tener al menos dos filas válidas con pregunta (columna 1) y respuesta (columna 2)."
                 );
                 setLoadingFile(false);
                 return;
@@ -364,7 +364,7 @@
                       />
                     </label>
                     <p className="file-help">
-                      Columna 1: respuesta correcta · Columna 2: pregunta
+                      Columna 1: pregunta · Columna 2: respuesta correcta
                     </p>
                   </div>
                 )}
@@ -403,7 +403,7 @@
                     <button className="hub-btn" onClick={() => startModule('quiz')}>
                       <span className="hub-icon">🎯</span>
                       <span className="hub-title">Módulo 1</span>
-                      <span className="hub-desc">Opción múiltiple con puntaje</span>
+                      <span className="hub-desc">Opción múltiple con puntaje</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('flashcard')}>
                       <span className="hub-icon">👁️</span>
