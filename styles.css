@@ -149,6 +149,26 @@ body {
   justify-content: flex-end;
 }
 
+.stats-mini {
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.stats-mini .stat-item {
+  padding: 5px 8px;
+  border-radius: 10px;
+  min-width: 64px;
+}
+
+.stats-mini .stat-label {
+  font-size: 0.65rem;
+}
+
+.stats-mini .stat-value {
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
 .stat-item {
   min-width: 80px;
   padding: 8px 10px;
@@ -531,9 +551,179 @@ body {
   filter: brightness(1.05);
 }
 
+/* ── Hub de módulos ───────────────────────────────── */
+.hub-screen {
+  margin-top: 10px;
+  padding: 20px 16px 24px;
+  border-radius: 20px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.hub-screen h2 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  color: #1f2937;
+}
+
+.hub-subtitle {
+  margin: 0 0 20px;
+  font-size: 0.88rem;
+  color: #6b7280;
+}
+
+.hub-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.hub-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 14px 20px;
+  border-radius: 20px;
+  border: 2px solid #e5e7eb;
+  background: #ffffff;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.hub-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(99, 102, 241, 0.18);
+  border-color: #6366f1;
+}
+
+.hub-icon {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+
+.hub-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.hub-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ── Módulo 2: Flashcard ──────────────────────────── */
+.flashcard-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 6px;
+}
+
+.reveal-btn {
+  width: 100%;
+  max-width: 400px;
+  padding: 16px 24px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 14px 36px rgba(99, 102, 241, 0.5);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.reveal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 44px rgba(99, 102, 241, 0.7);
+}
+
+.answer-reveal {
+  width: 100%;
+  padding: 20px 20px 22px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #86efac;
+  color: #15803d;
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  font-weight: 700;
+  text-align: center;
+  animation: revealFade 0.35s ease-out;
+  line-height: 1.4;
+}
+
+@keyframes revealFade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reveal-next-btn {
+  width: 100%;
+  max-width: 400px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  border: 0;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.5);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.reveal-next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(34, 197, 94, 0.7);
+}
+
+/* ── Botón "Cambiar módulo" ───────────────────────── */
+.change-module-btn {
+  border-radius: 999px;
+  padding: 10px 20px;
+  border: 2px solid #6366f1;
+  background: transparent;
+  color: #6366f1;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease, transform 0.12s ease;
+}
+
+.change-module-btn:hover {
+  background: #6366f1;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ── Responsive hub ───────────────────────────────── */
+@media (max-width: 480px) {
+  .hub-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
 .bottom-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
   margin-top: 10px;
 }
 

@@ -73,6 +73,8 @@
         const [loadingFile, setLoadingFile] = useState(false);
         const [disabledOptions, setDisabledOptions] = useState([]);
         const [failedQuestions, setFailedQuestions] = useState([]);
+        const [gameMode, setGameMode] = useState(null); // null | 'quiz' | 'flashcard'
+        const [revealed, setRevealed] = useState(false);
         const timeoutRef = useRef(null);
         const sfxCorrect = useRef(new Audio("music/Correcto.mp3"));
         const sfxError = useRef(new Audio("music/Error.mp3"));
@@ -145,14 +147,9 @@
               }
 
               setRawRows(parsed);
-              const shuffled = shuffleArray(parsed);
-              setQuestions(shuffled);
-              setCurrentIndex(0);
-              setScore(0);
-              setCorrectCount(0);
-              setWrongCount(0);
+              setGameStarted(false);
               setGameOver(false);
-              setGameStarted(true);
+              setGameMode(null);
               setSelectedOption(null);
               setFeedback(null);
             } catch (error) {
@@ -278,29 +275,12 @@
 
         function handleRestart() {
           if (!rawRows.length) {
-            setQuestions([]);
             setGameStarted(false);
             setGameOver(false);
-            setScore(0);
-            setCorrectCount(0);
-            setWrongCount(0);
-            setCurrentIndex(0);
-            setSelectedOption(null);
-            setFeedback(null);
-            setFailedQuestions([]);
+            setGameMode(null);
             return;
           }
-          const shuffled = shuffleArray(rawRows);
-          setQuestions(shuffled);
-          setCurrentIndex(0);
-          setScore(0);
-          setCorrectCount(0);
-          setWrongCount(0);
-          setGameOver(false);
-          setGameStarted(true);
-          setSelectedOption(null);
-          setFeedback(null);
-          setFailedQuestions([]);
+          startModule(gameMode);
         }
 
         function handleReviewFailed() {
@@ -316,6 +296,37 @@
           setSelectedOption(null);
           setFeedback(null);
           setFailedQuestions([]);
+          setRevealed(false);
+        }
+
+        function startModule(mode) {
+          const shuffled = shuffleArray(rawRows);
+          setQuestions(shuffled);
+          setCurrentIndex(0);
+          setScore(0);
+          setCorrectCount(0);
+          setWrongCount(0);
+          setGameOver(false);
+          setGameStarted(true);
+          setGameMode(mode);
+          setSelectedOption(null);
+          setFeedback(null);
+          setFailedQuestions([]);
+          setRevealed(false);
+        }
+
+        function handleChangeModule() {
+          setGameStarted(false);
+          setGameOver(false);
+          setGameMode(null);
+          setSelectedOption(null);
+          setFeedback(null);
+          setRevealed(false);
+        }
+
+        function handleFlashcardNext() {
+          setRevealed(false);
+          goToNextQuestion();
         }
 
         const currentQuestion =
@@ -335,14 +346,14 @@
             <div className="floating-orb orb-2" />
             <div className="app-container">
               <header className="app-header">
-                <h1>Cuestionario desde Excel</h1>
+                <h1>Cuestionario App</h1>
                 <p className="subtitle">
                   Estudia tus conceptos convirtiendo tu Excel en un juego rápido.
                 </p>
               </header>
 
               <section className="top-bar">
-                {!gameStarted && (
+                {rawRows.length === 0 && (
                   <div className="file-input-wrapper">
                     <label className="file-label">
                       <span>📁 Cargar archivo Excel</span>
@@ -358,52 +369,48 @@
                   </div>
                 )}
 
-                {!gameOver && (
-                  <div className="stats">
-                    <div className="stat-item">
-                      <span className="stat-label">Puntaje</span>
-                      <span className="stat-value">{score}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Aciertos</span>
-                      <span className="stat-value stat-ok">{correctCount}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Errores</span>
-                      <span className="stat-value stat-bad">{wrongCount}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Progreso</span>
-                      <span className="stat-value">
-                        {totalQuestions
-                          ? `${currentIndex + 1} / ${totalQuestions}`
-                          : "-"}
-                      </span>
-                    </div>
+              </section>
+
+              {gameStarted && !gameOver && (
+                <section className="progress-bar-wrapper">
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
-                )}
-              </section>
+                </section>
+              )}
 
-              <section className="progress-bar-wrapper">
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              </section>
-
-              {!gameStarted && (
+              {rawRows.length === 0 && (
                 <section className="welcome-card">
                   <h2>Sube tu archivo para empezar</h2>
                   <p>
-                    El juego mostrará una pregunta y dos posibles respuestas. Una será
-                    la correcta y la otra se tomará de otra fila de tu Excel.
+                    Carga tu Excel una vez y elige entre dos modos de estudio:
+                    cuestionario de opción múiltiple o flashcard.
                   </p>
-                  <p>
-                    Responde lo más rápido que puedas, suma puntos y revisa tus
-                    resultados al final.
+                  <p>Columna 1: respuesta · Columna 2: pregunta.</p>
+                </section>
+              )}
+
+              {rawRows.length > 0 && !gameStarted && !gameOver && (
+                <section className="hub-screen">
+                  <h2>¿Qué módulo quieres practicar?</h2>
+                  <p className="hub-subtitle">
+                    {rawRows.length} pregunta{rawRows.length !== 1 ? 's' : ''} cargada{rawRows.length !== 1 ? 's' : ''}
                   </p>
+                  <div className="hub-buttons">
+                    <button className="hub-btn" onClick={() => startModule('quiz')}>
+                      <span className="hub-icon">🎯</span>
+                      <span className="hub-title">Módulo 1</span>
+                      <span className="hub-desc">Opción múiltiple con puntaje</span>
+                    </button>
+                    <button className="hub-btn" onClick={() => startModule('flashcard')}>
+                      <span className="hub-icon">👁️</span>
+                      <span className="hub-title">Módulo 2</span>
+                      <span className="hub-desc">Flashcard – Revelar respuesta</span>
+                    </button>
+                  </div>
                 </section>
               )}
 
@@ -416,7 +423,7 @@
                 </div>
               )}
 
-              {gameStarted && !gameOver && currentQuestion && (
+              {gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
                 <main className="game-area">
                   <div className="question-card question-enter">
                     <div className="question-label">Pregunta</div>
@@ -467,39 +474,122 @@
                 </main>
               )}
 
+              {gameStarted && !gameOver && gameMode === 'quiz' && (
+                <div className="stats stats-mini">
+                  <div className="stat-item">
+                    <span className="stat-label">Puntaje</span>
+                    <span className="stat-value">{score}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Aciertos</span>
+                    <span className="stat-value stat-ok">{correctCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Errores</span>
+                    <span className="stat-value stat-bad">{wrongCount}</span>
+                  </div>
+                  <div className="stat-item">
+                    <span className="stat-label">Progreso</span>
+                    <span className="stat-value">
+                      {totalQuestions ? `${currentIndex + 1} / ${totalQuestions}` : "-"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'flashcard' && currentQuestion && (
+                <main className="flashcard-area">
+                  <div className="question-card">
+                    <div className="question-label">
+                      Pregunta {currentIndex + 1} / {totalQuestions}
+                    </div>
+                    <div className="question-text">{currentQuestion.question}</div>
+                  </div>
+                  {!revealed ? (
+                    <button className="reveal-btn" onClick={() => {
+                      if (!celebrationUnlocked.current) {
+                        celebrationUnlocked.current = true;
+                        sfxCelebration.current.play().then(() => {
+                          sfxCelebration.current.pause();
+                          sfxCelebration.current.currentTime = 0;
+                        }).catch(() => { });
+                      }
+                      playSound(sfxCorrect);
+                      setRevealed(true);
+                    }}>
+                      👁️ Revelar respuesta
+                    </button>
+                  ) : (
+                    <>
+                      <div className="answer-reveal">{currentQuestion.answer}</div>
+                      <button className="reveal-next-btn" onClick={handleFlashcardNext}>
+                        {currentIndex + 1 < totalQuestions ? 'Siguiente →' : '✅ Ver resultados'}
+                      </button>
+                    </>
+                  )}
+                </main>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'flashcard' && (
+                <div className="bottom-actions">
+                  <button className="ghost-button" onClick={handleRestart}>
+                    Reiniciar ronda
+                  </button>
+                  <button className="ghost-button" onClick={handleChangeModule}>
+                    🔀 Cambiar módulo
+                  </button>
+                </div>
+              )}
+
               {gameOver && (
                 <section className="results-card">
-                  <h2>Resultados finales</h2>
-                  <div className="results-grid">
-                    <div className="result-item">
-                      <span className="result-label">Total de preguntas</span>
-                      <span className="result-value">{totalQuestions}</span>
-                    </div>
-                    <div className="result-item">
-                      <span className="result-label">Aciertos</span>
-                      <span className="result-value stat-ok">{correctCount}</span>
-                    </div>
-                    <div className="result-item">
-                      <span className="result-label">Errores</span>
-                      <span className="result-value stat-bad">{wrongCount}</span>
-                    </div>
-                    <div className="result-item">
-                      <span className="result-label">Porcentaje de éxito</span>
-                      <span className="result-value">
-                        {successPercentage}
-                        <span className="result-unit">%</span>
-                      </span>
-                    </div>
-                    <div className="result-item">
-                      <span className="result-label">Puntaje final</span>
-                      <span className="result-value">{score}</span>
-                    </div>
-                  </div>
+                  {gameMode === 'quiz' ? (
+                    <>
+                      <h2>Resultados finales</h2>
+                      <div className="results-grid">
+                        <div className="result-item">
+                          <span className="result-label">Total de preguntas</span>
+                          <span className="result-value">{totalQuestions}</span>
+                        </div>
+                        <div className="result-item">
+                          <span className="result-label">Aciertos</span>
+                          <span className="result-value stat-ok">{correctCount}</span>
+                        </div>
+                        <div className="result-item">
+                          <span className="result-label">Errores</span>
+                          <span className="result-value stat-bad">{wrongCount}</span>
+                        </div>
+                        <div className="result-item">
+                          <span className="result-label">Porcentaje de éxito</span>
+                          <span className="result-value">
+                            {successPercentage}<span className="result-unit">%</span>
+                          </span>
+                        </div>
+                        <div className="result-item">
+                          <span className="result-label">Puntaje final</span>
+                          <span className="result-value">{score}</span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <h2>¡Ronda completada!</h2>
+                      <div className="results-grid">
+                        <div className="result-item">
+                          <span className="result-label">Tarjetas revisadas</span>
+                          <span className="result-value">{totalQuestions}</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <div className="results-actions">
                     <button className="restart-button" onClick={handleRestart}>
-                      Reiniciar juego
+                      🔁 Repetir ronda
                     </button>
-                    {failedQuestions.length > 0 && (
+                    <button className="change-module-btn" onClick={handleChangeModule}>
+                      🔀 Cambiar módulo
+                    </button>
+                    {gameMode === 'quiz' && failedQuestions.length > 0 && (
                       <button className="review-button" onClick={handleReviewFailed}>
                         🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
                       </button>
@@ -508,10 +598,13 @@
                 </section>
               )}
 
-              {gameStarted && !gameOver && (
+              {gameStarted && !gameOver && gameMode === 'quiz' && (
                 <div className="bottom-actions">
                   <button className="ghost-button" onClick={handleRestart}>
                     Reiniciar ronda
+                  </button>
+                  <button className="ghost-button" onClick={handleChangeModule}>
+                    🔀 Cambiar módulo
                   </button>
                 </div>
               )}
