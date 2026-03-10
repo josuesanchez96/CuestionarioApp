@@ -525,20 +525,15 @@
                       }
                       playSound(sfxCorrect);
                       setRevealed(true);
-                      if (currentIndex + 1 >= totalQuestions) {
-                        timeoutRef.current = setTimeout(() => handleFlashcardNext(), 1800);
-                      }
                     }}>
                       👁️ Ver respuesta
                     </button>
                   ) : (
                     <>
                       <div className="answer-reveal">{currentQuestion.answer}</div>
-                      {currentIndex + 1 < totalQuestions && (
-                        <button className="reveal-next-btn" onClick={handleFlashcardNext}>
-                          Siguiente →
-                        </button>
-                      )}
+                      <button className="reveal-next-btn" onClick={handleFlashcardNext}>
+                        {currentIndex + 1 < totalQuestions ? 'Siguiente →' : '✅ Ver resultados'}
+                      </button>
                     </>
                   )}
                 </main>
