@@ -71,8 +71,11 @@
         const hours = time.getHours();
         const isPM = hours >= 12;
 
-        // Calculate progress smoothly including seconds
-        const progress = (minutes + seconds / 60) / 60;
+        // Calculate progress smoothly over a 24 hour period
+        // 24 hours * 60 minutes * 60 seconds
+        const totalSecondsInDay = 24 * 60 * 60;
+        const currentSeconds = (hours * 60 * 60) + (minutes * 60) + seconds;
+        const progress = currentSeconds / totalSecondsInDay;
 
         // SVG Circle math
         const radius = 120;
