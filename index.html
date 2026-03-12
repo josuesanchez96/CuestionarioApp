@@ -86,9 +86,8 @@
         const minuteProgress = minutes / 60;
         const waterY = 280 - (280 * minuteProgress);
 
-        // Custom 12-hour format without AM/PM text
-        let displayHours = hours % 12;
-        displayHours = displayHours ? displayHours : 12; // the hour '0' should be '12'
+        // Formato 12 horas, pero usando 0 en lugar de 12
+        const displayHours = hours % 12;
         const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
         const displayTime = `${displayHours}:${displayMinutes}`;
 
