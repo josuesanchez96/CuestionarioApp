@@ -86,8 +86,8 @@
         const minuteProgress = minutes / 60;
         const waterY = 280 - (280 * minuteProgress);
 
-        // Formato 12 horas, pero usando 0 en lugar de 12
-        const displayHours = hours % 12;
+        // Formato 12 horas: medianoche es 0, mediodía es 12
+        const displayHours = hours === 12 ? 12 : hours % 12;
         const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
         const displayTime = `${displayHours}:${displayMinutes}`;
 
