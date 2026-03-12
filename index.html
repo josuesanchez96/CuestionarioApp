@@ -534,6 +534,13 @@
                     >
                       ◀
                     </button>
+                    <button
+                      className="m3-next-btn-dark"
+                      onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)}
+                      title="Cambiar módulo"
+                    >
+                      ⛌
+                    </button>
                     <button className="m3-next-btn-dark" onClick={() => {
                       setRevealed(false);
                       goToNextQuestion();
@@ -541,9 +548,6 @@
                       {currentIndex + 1 < totalQuestions ? '▶' : '■'}
                     </button>
                   </div>
-                  <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)} style={{ marginTop: '10px', fontSize: '1.5rem' }}>
-                    ⛌
-                  </button>
                 </main>
               )}
 
