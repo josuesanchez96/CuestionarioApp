@@ -60,11 +60,62 @@
 
       function Clock() {
         const [time, setTime] = useState(new Date());
+
         useEffect(() => {
           const timer = setInterval(() => setTime(new Date()), 1000);
           return () => clearInterval(timer);
         }, []);
-        return <div className="large-clock">{time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</div>;
+
+        const minutes = time.getMinutes();
+        const seconds = time.getSeconds();
+        const hours = time.getHours();
+        const isPM = hours >= 12;
+
+        // Calculate progress smoothly including seconds
+        const progress = (minutes + seconds / 60) / 60;
+
+        // SVG Circle math
+        const radius = 120;
+        const circumference = 2 * Math.PI * radius;
+        const strokeDashoffset = circumference - progress * circumference;
+
+        // Custom 12-hour format without AM/PM text
+        let displayHours = hours % 12;
+        displayHours = displayHours ? displayHours : 12; // the hour '0' should be '12'
+        const displayMinutes = minutes < 10 ? '0' + minutes : minutes;
+        const displayTime = `${displayHours}:${displayMinutes}`;
+
+        return (
+          <div className="clock-container">
+            <svg className="clock-svg" width="280" height="280" viewBox="0 0 280 280">
+              {/* Background circle */}
+              <circle
+                className="clock-circle-bg"
+                cx="140"
+                cy="140"
+                r={radius}
+                strokeWidth="12"
+                fill="none"
+              />
+              {/* Progress circle */}
+              <circle
+                className={`clock-circle-progress ${isPM ? 'pm-color' : ''}`}
+                cx="140"
+                cy="140"
+                r={radius}
+                strokeWidth="12"
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                transform="rotate(-90 140 140)"
+              />
+            </svg>
+            <div className="clock-text">
+              {displayTime}
+            </div>
+          </div>
+        );
       }
 
       function App() {
