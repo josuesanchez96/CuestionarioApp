@@ -681,7 +681,7 @@ body {
 
 .clock-text {
   position: absolute;
-  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-size: clamp(3.8rem, 15vw, 6rem);
   font-weight: 700;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
