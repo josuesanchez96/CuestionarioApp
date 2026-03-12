@@ -469,12 +469,24 @@
                       {currentQuestion.answer}
                     </span>
                   </div>
-                  <button className="m3-next-btn-dark" onClick={() => {
-                    setRevealed(false);
-                    goToNextQuestion();
-                  }}>
-                    {currentIndex + 1 < totalQuestions ? 'Siguiente →' : '✅ Ver resultados'}
-                  </button>
+                  <div className="m3-actions">
+                    <button
+                      className="m3-next-btn-dark"
+                      onClick={() => {
+                        setRevealed(false);
+                        setCurrentIndex((prev) => Math.max(0, prev - 1));
+                      }}
+                      disabled={currentIndex === 0}
+                    >
+                      ← Atrás
+                    </button>
+                    <button className="m3-next-btn-dark" onClick={() => {
+                      setRevealed(false);
+                      goToNextQuestion();
+                    }}>
+                      {currentIndex + 1 < totalQuestions ? 'Siguiente →' : 'Finalizar'}
+                    </button>
+                  </div>
                   <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)} style={{ marginTop: '10px' }}>
                     🔀 Cambiar módulo
                   </button>

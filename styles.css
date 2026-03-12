@@ -668,8 +668,8 @@ body {
   width: 100%;
   max-width: 600px;
   min-height: 140px;
-  background: #374151;
-  border: 2px dashed #4b5563;
+  background: #000000;
+  border: none;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -678,38 +678,50 @@ body {
   padding: 24px;
   font-size: clamp(1.2rem, 2.5vw, 1.6rem);
   font-weight: 600;
-  color: #34d399;
+  color: #ffffff;
   text-align: center;
   user-select: none;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.2s ease;
 }
 
 .m3-answer-box:hover {
-  background: #4b5563;
-  border-color: #6b7280;
+  background: #111827;
+}
+
+.m3-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 10px;
 }
 
 .m3-next-btn-dark {
-  width: 100%;
-  max-width: 400px;
-  padding: 16px 24px;
+  flex: 1;
+  padding: 16px 20px;
   border-radius: 999px;
   border: 1px solid #374151;
   background: #000000;
   color: #ffffff;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
-  margin-top: 10px;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, opacity 0.14s ease;
 }
 
-.m3-next-btn-dark:hover {
+.m3-next-btn-dark:hover:not(:disabled) {
   transform: translateY(-2px);
   background: #111827;
   border-color: #4b5563;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+}
+
+.m3-next-btn-dark:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .dark-theme .results-card {
