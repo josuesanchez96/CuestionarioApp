@@ -122,21 +122,51 @@
       }
 
       function App() {
-        const [rawRows, setRawRows] = useState([]); // {answer, question}
-        const [questions, setQuestions] = useState([]);
-        const [currentIndex, setCurrentIndex] = useState(0);
+        const [rawRows, setRawRows] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_rawRows');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [questions, setQuestions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_questions');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [currentIndex, setCurrentIndex] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_currentIndex');
+          return saved ? parseInt(saved, 10) : 0;
+        });
         const [options, setOptions] = useState([]);
         const [selectedOption, setSelectedOption] = useState(null);
         const [feedback, setFeedback] = useState(null);
-        const [score, setScore] = useState(0);
-        const [correctCount, setCorrectCount] = useState(0);
-        const [wrongCount, setWrongCount] = useState(0);
-        const [gameStarted, setGameStarted] = useState(false);
-        const [gameOver, setGameOver] = useState(false);
+        const [score, setScore] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_score');
+          return saved ? parseFloat(saved) : 0;
+        });
+        const [correctCount, setCorrectCount] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_correctCount');
+          return saved ? parseInt(saved, 10) : 0;
+        });
+        const [wrongCount, setWrongCount] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_wrongCount');
+          return saved ? parseInt(saved, 10) : 0;
+        });
+        const [gameStarted, setGameStarted] = useState(() => {
+          return localStorage.getItem('cuestionario_gameStarted') === 'true';
+        });
+        const [gameOver, setGameOver] = useState(() => {
+          return localStorage.getItem('cuestionario_gameOver') === 'true';
+        });
         const [loadingFile, setLoadingFile] = useState(false);
-        const [disabledOptions, setDisabledOptions] = useState([]);
-        const [failedQuestions, setFailedQuestions] = useState([]);
-        const [gameMode, setGameMode] = useState(null); // null | 'quiz' | 'flashcard'
+        const [disabledOptions, setDisabledOptions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_disabledOptions');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [failedQuestions, setFailedQuestions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_failedQuestions');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [gameMode, setGameMode] = useState(() => {
+          return localStorage.getItem('cuestionario_gameMode') || null;
+        });
         const [revealed, setRevealed] = useState(false);
         const [confirm, setConfirm] = useState(null); // { message, onAccept }
         const timeoutRef = useRef(null);
@@ -146,6 +176,24 @@
         const celebrationUnlocked = useRef(false);
 
         const totalQuestions = questions.length;
+
+        // --- Persistent Storage Sync ---
+        useEffect(() => { localStorage.setItem('cuestionario_rawRows', JSON.stringify(rawRows)); }, [rawRows]);
+        useEffect(() => { localStorage.setItem('cuestionario_questions', JSON.stringify(questions)); }, [questions]);
+        useEffect(() => { localStorage.setItem('cuestionario_currentIndex', currentIndex); }, [currentIndex]);
+        useEffect(() => { localStorage.setItem('cuestionario_score', score); }, [score]);
+        useEffect(() => { localStorage.setItem('cuestionario_correctCount', correctCount); }, [correctCount]);
+        useEffect(() => { localStorage.setItem('cuestionario_wrongCount', wrongCount); }, [wrongCount]);
+        useEffect(() => { localStorage.setItem('cuestionario_gameStarted', gameStarted); }, [gameStarted]);
+        useEffect(() => { localStorage.setItem('cuestionario_gameOver', gameOver); }, [gameOver]);
+        useEffect(() => { localStorage.setItem('cuestionario_disabledOptions', JSON.stringify(disabledOptions)); }, [disabledOptions]);
+        useEffect(() => { localStorage.setItem('cuestionario_failedQuestions', JSON.stringify(failedQuestions)); }, [failedQuestions]);
+        useEffect(() => {
+          if (gameMode) localStorage.setItem('cuestionario_gameMode', gameMode);
+          else localStorage.removeItem('cuestionario_gameMode');
+        }, [gameMode]);
+
+        // --- Core Effects ---
 
         const progressPercent = useMemo(() => {
           if (!totalQuestions) return 0;
@@ -173,6 +221,25 @@
             sfxCelebration.current.play().catch(() => { });
           }
         }, [gameOver]);
+
+        const handleRemoveData = () => {
+          if (window.confirm('¿Estás seguro de que deseas borrar los datos guardados y empezar de cero?')) {
+            localStorage.clear();
+            setRawRows([]);
+            setQuestions([]);
+            setGameStarted(false);
+            setGameOver(false);
+            setGameMode(null);
+            setCurrentIndex(0);
+            setScore(0);
+            setCorrectCount(0);
+            setWrongCount(0);
+            setDisabledOptions([]);
+            setFailedQuestions([]);
+            setRevealed(false);
+            setLoadingFile(false);
+          }
+        };
 
         function handleFileChange(e) {
           const file = e.target.files?.[0];
@@ -490,6 +557,9 @@
                       <span className="hub-desc">Foco oscuro, pregunta y respuesta</span>
                     </button>
                   </div>
+                  <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
+                    🗑️ Borrar memoria y empezar de cero
+                  </button>
                 </section>
               )}
 
