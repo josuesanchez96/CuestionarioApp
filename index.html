@@ -532,17 +532,17 @@
                       }}
                       disabled={currentIndex === 0}
                     >
-                      ← Atrás
+                      ◀
                     </button>
                     <button className="m3-next-btn-dark" onClick={() => {
                       setRevealed(false);
                       goToNextQuestion();
                     }}>
-                      {currentIndex + 1 < totalQuestions ? 'Siguiente →' : 'Finalizar'}
+                      {currentIndex + 1 < totalQuestions ? '▶' : '■'}
                     </button>
                   </div>
-                  <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)} style={{ marginTop: '10px' }}>
-                    🔀 Cambiar módulo
+                  <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)} style={{ marginTop: '10px', fontSize: '1.5rem' }}>
+                    ⛌
                   </button>
                 </main>
               )}
