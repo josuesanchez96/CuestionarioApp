@@ -679,6 +679,40 @@ body {
   /* Orange PM progress color */
 }
 
+.clock-water-wave {
+  fill: #0891b2; /* Cyan oscuro elegante para fondos negros */
+  opacity: 0.25;
+  transition: fill 0.5s ease;
+  animation: waveAction 4s linear infinite;
+}
+
+.clock-water-wave.pm-color {
+  fill: #0d9488; /* Verde/Teal oscuro que contrasta con el círculo naranja */
+}
+
+.clock-water-wave-2 {
+  opacity: 0.25;
+  animation: waveAction2 6s linear infinite;
+}
+
+@keyframes waveAction {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-280px);
+  }
+}
+
+@keyframes waveAction2 {
+  0% {
+    transform: translateX(-280px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .clock-text {
   position: absolute;
   font-size: clamp(3.8rem, 15vw, 6rem);

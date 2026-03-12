@@ -82,6 +82,10 @@
         const circumference = 2 * Math.PI * radius;
         const strokeDashoffset = circumference - progress * circumference;
 
+        // Water fill math (0 to 60 minutes)
+        const minuteProgress = minutes / 60;
+        const waterY = 280 - (280 * minuteProgress);
+
         // Custom 12-hour format without AM/PM text
         let displayHours = hours % 12;
         displayHours = displayHours ? displayHours : 12; // the hour '0' should be '12'
@@ -91,6 +95,11 @@
         return (
           <div className="clock-container">
             <svg className="clock-svg" width="280" height="280" viewBox="0 0 280 280">
+              <defs>
+                <clipPath id="circleMask">
+                  <circle cx="140" cy="140" r={radius} />
+                </clipPath>
+              </defs>
               {/* Background circle */}
               <circle
                 className="clock-circle-bg"
@@ -100,6 +109,26 @@
                 strokeWidth="12"
                 fill="none"
               />
+              {/* Water fill group */}
+              <g clipPath="url(#circleMask)">
+                <g
+                  style={{
+                    transform: `translateY(${waterY}px)`,
+                    transition: 'transform 1s ease-in-out'
+                  }}
+                >
+                  {/* Back wave */}
+                  <path
+                    className={`clock-water-wave clock-water-wave-2 ${isPM ? 'pm-color' : ''}`}
+                    d="M 0 0 Q 70 12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
+                  />
+                  {/* Front wave */}
+                  <path
+                    className={`clock-water-wave ${isPM ? 'pm-color' : ''}`}
+                    d="M 0 0 Q 70 -12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
+                  />
+                </g>
+              </g>
               {/* Progress circle */}
               <circle
                 className={`clock-circle-progress ${isPM ? 'pm-color' : ''}`}
