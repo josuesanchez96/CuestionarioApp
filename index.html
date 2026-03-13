@@ -84,7 +84,11 @@
 
         // Water fill math (0 to 60 minutes)
         const minuteProgress = minutes / 60;
-        const waterY = 280 - (280 * minuteProgress);
+        
+        // El círculo empieza visualmente más arriba (por el radio y el clipPath)
+        // Mapeamos el progreso para que en 0 min esté en y=260 (apenas visible) 
+        // y en 60 min esté en y=20 (lleno completamente)
+        const waterY = 260 - (240 * minuteProgress);
 
         // Formato 12 horas: medianoche es 0, mediodía es 12
         const displayHours = hours === 12 ? 12 : hours % 12;
