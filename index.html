@@ -58,7 +58,7 @@
         return arr;
       }
 
-      function Clock({ highContrast }) {
+      function Clock({ lightMode }) {
         const [time, setTime] = useState(new Date());
 
         useEffect(() => {
@@ -111,7 +111,7 @@
                 r={radius}
                 strokeWidth="12"
                 fill="none"
-                style={{ opacity: highContrast ? 0.6 : 1, transition: 'opacity 0.2s', stroke: highContrast ? 'rgba(255,255,255,0.4)' : '#1f2937' }}
+                style={{ opacity: lightMode === 2 ? 0.6 : 1, transition: 'opacity 0.2s', stroke: lightMode === 2 ? 'rgba(255,255,255,0.4)' : '#1f2937' }}
               />
               {/* Water fill group */}
               <g clipPath="url(#circleMask)">
@@ -124,13 +124,13 @@
                   {/* Back wave */}
                   <path
                     className={`clock-water-wave clock-water-wave-2 ${isPM ? 'pm-color' : ''}`}
-                    style={{ opacity: highContrast ? 0.35 : 0.25, transition: 'opacity 0.2s', fill: highContrast ? '#ffffff' : '' }}
+                    style={{ opacity: lightMode === 2 ? 0.35 : 0.25, transition: 'opacity 0.2s', fill: lightMode === 2 ? '#ffffff' : '' }}
                     d="M 0 0 Q 70 12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
                   />
                   {/* Front wave */}
                   <path
                     className={`clock-water-wave ${isPM ? 'pm-color' : ''}`}
-                    style={{ opacity: highContrast ? 0.5 : 0.25, transition: 'opacity 0.2s', fill: highContrast ? '#ffffff' : '' }}
+                    style={{ opacity: lightMode === 2 ? 0.5 : 0.25, transition: 'opacity 0.2s', fill: lightMode === 2 ? '#ffffff' : '' }}
                     d="M 0 0 Q 70 -12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
                   />
                 </g>
@@ -147,7 +147,7 @@
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 transform="rotate(-90 140 140)"
-                style={{ opacity: highContrast ? 0.7 : 1, transition: 'opacity 0.2s' }}
+                style={{ opacity: lightMode === 2 ? 0.7 : 1, transition: 'opacity 0.2s' }}
               />
             </svg>
             <div className="clock-text">
@@ -210,7 +210,7 @@
         const sfxError = useRef(new Audio("music/Error.mp3"));
         const sfxCelebration = useRef(new Audio("music/Celebration.mp3"));
         const celebrationUnlocked = useRef(false);
-        const [highContrast, setHighContrast] = useState(false);
+        const [lightMode, setLightMode] = useState(0); // 0 = oscuro, 1 = texto claro, 2 = aurora
         const gradientRef = useRef(null);
 
         const totalQuestions = questions.length;
@@ -233,7 +233,7 @@
 
         // --- Ambient Background Effect ---
         useEffect(() => {
-          if (gameMode !== 'module3' || !highContrast || !gradientRef.current) return;
+          if (gameMode !== 'module3' || lightMode !== 2 || !gradientRef.current) return;
 
           let animationFrameId;
           const colors = [
@@ -289,7 +289,7 @@
              cancelAnimationFrame(animationFrameId);
              if (gradientRef.current) gradientRef.current.style.background = '';
           };
-        }, [gameMode, highContrast]);
+        }, [gameMode, lightMode]);
 
         // --- Core Effects ---
 
@@ -672,11 +672,11 @@
 
               {gameStarted && !gameOver && gameMode === 'module3' && currentQuestion && (
                 <main className="module3-area">
-                  <div ref={gradientRef} className={`m3-animated-bg ${highContrast ? 'active' : ''}`} />
-                  <Clock highContrast={highContrast} />
+                  <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
+                  <Clock lightMode={lightMode} />
                   <div 
                     className="m3-question-text" 
-                    style={{ color: highContrast ? '#ffffff' : '#6b7280' }}
+                    style={{ color: lightMode > 0 ? '#ffffff' : '#6b7280' }}
                     onClick={() => {
                       if (!revealed && !celebrationUnlocked.current) {
                         celebrationUnlocked.current = true;
@@ -693,9 +693,9 @@
                   <div
                     className="m3-answer-box"
                     style={{ 
-                      color: highContrast ? '#ffffff' : '#6b7280',
-                      background: highContrast ? 'transparent' : '',
-                      borderColor: highContrast ? 'transparent' : ''
+                      color: lightMode > 0 ? '#ffffff' : '#6b7280',
+                      background: lightMode === 2 ? 'transparent' : '',
+                      borderColor: lightMode === 2 ? 'transparent' : ''
                     }}
                   >
                     <span style={{ opacity: revealed ? 1 : 0, transition: 'opacity 0.2s' }}>
@@ -704,7 +704,7 @@
                   </div>
                   <div className="m3-actions">
                     <button
-                      className={`m3-next-btn-dark ${highContrast ? 'transparent-btn' : ''}`}
+                      className={`m3-next-btn-dark ${lightMode === 2 ? 'transparent-btn' : ''}`}
                       onClick={() => {
                         setRevealed(false);
                         setCurrentIndex((prev) => Math.max(0, prev - 1));
@@ -714,9 +714,9 @@
                       ◀
                     </button>
                     <button
-                      className={`m3-next-btn-dark ${highContrast ? 'transparent-btn' : ''}`}
-                      onClick={() => setHighContrast(!highContrast)}
-                      title="Cambiar color de texto"
+                      className={`m3-next-btn-dark ${lightMode === 2 ? 'transparent-btn' : ''}`}
+                      onClick={() => setLightMode((prev) => (prev + 1) % 3)}
+                      title="Cambiar iluminación"
                     >
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="5"></circle>
@@ -731,13 +731,13 @@
                       </svg>
                     </button>
                     <button
-                      className={`m3-next-btn-dark ${highContrast ? 'transparent-btn' : ''}`}
+                      className={`m3-next-btn-dark ${lightMode === 2 ? 'transparent-btn' : ''}`}
                       onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)}
                       title="Cambiar módulo"
                     >
                       ⛌
                     </button>
-                    <button className={`m3-next-btn-dark ${highContrast ? 'transparent-btn' : ''}`} onClick={() => {
+                    <button className={`m3-next-btn-dark ${lightMode === 2 ? 'transparent-btn' : ''}`} onClick={() => {
                       setRevealed(false);
                       goToNextQuestion();
                     }}>
