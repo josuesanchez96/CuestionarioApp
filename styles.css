@@ -768,8 +768,9 @@ body {
   text-align: center;
   color: #6b7280;
   line-height: 1.4;
-  cursor: pointer;
   user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .m3-answer-box {
@@ -789,6 +790,8 @@ body {
   color: #6b7280;
   text-align: center;
   user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s ease;
 }
 
