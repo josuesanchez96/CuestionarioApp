@@ -150,7 +150,7 @@
                 style={{ opacity: lightMode === 2 ? 0.7 : 1, transition: 'opacity 0.2s' }}
               />
             </svg>
-            <div className="clock-text">
+            <div className={`clock-text ${lightMode === 2 ? 'clock-text-vibrant' : ''}`}>
               {displayTime}
             </div>
           </div>
