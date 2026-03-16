@@ -835,19 +835,26 @@ body {
   box-shadow: none;
 }
 
-/* Glassmorphism for active light mode */
+/* Glassmorphism for active light mode with vibrant animated background */
+@keyframes vibrantAuroraButton {
+  0% { background-color: rgba(255, 0, 85, 0.25); border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 85, 0.2); }
+  16% { background-color: rgba(0, 255, 170, 0.25); border-color: rgba(0, 255, 170, 0.4); box-shadow: 0 8px 32px rgba(0, 255, 170, 0.2); }
+  33% { background-color: rgba(0, 136, 255, 0.25); border-color: rgba(0, 136, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 136, 255, 0.2); }
+  50% { background-color: rgba(255, 0, 255, 0.25); border-color: rgba(255, 0, 255, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 255, 0.2); }
+  66% { background-color: rgba(255, 255, 0, 0.25); border-color: rgba(255, 255, 0, 0.4); box-shadow: 0 8px 32px rgba(255, 255, 0, 0.2); }
+  83% { background-color: rgba(255, 170, 0, 0.25); border-color: rgba(255, 170, 0, 0.4); box-shadow: 0 8px 32px rgba(255, 170, 0, 0.2); }
+  100% { background-color: rgba(255, 0, 85, 0.25); border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 85, 0.2); }
+}
+
 .m3-next-btn-dark.transparent-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
   color: #ffffff;
   backdrop-filter: blur(8px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  animation: vibrantAuroraButton 3s linear infinite;
+  transition: transform 0.14s ease, filter 0.14s ease;
 }
 
 .m3-next-btn-dark.transparent-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  filter: brightness(1.3);
 }
 
 .dark-theme .results-card {
@@ -1175,4 +1182,25 @@ body {
 .confirm-accept:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+}
+
+/* ── Animación vibrante del círculo (Módulo 3) ── */
+@keyframes vibrantAuroraBlink {
+  0% { stroke: #ff0055; }
+  16% { stroke: #00ffaa; }
+  33% { stroke: #0088ff; }
+  50% { stroke: #ff00ff; }
+  66% { stroke: #ffff00; }
+  83% { stroke: #ffaa00; }
+  100% { stroke: #ff0055; }
+}
+
+.aurora-circle-vibrant {
+  animation: vibrantAuroraBlink 3s linear infinite !important;
+  opacity: 1 !important;
+}
+
+.aurora-circle-bg-vibrant {
+  animation: vibrantAuroraBlink 3s linear infinite reverse !important;
+  opacity: 0.3 !important;
 }
