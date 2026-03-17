@@ -752,7 +752,7 @@ body {
 
 .clock-text-vibrant {
   color: #ffffff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.3), 0 0 30px rgba(255, 255, 255, 0.2);
+  /* Removed text-shadow to make it look simpler and less illuminated */
 }
 
 @media (min-width: 768px) {
@@ -843,13 +843,13 @@ body {
 
 /* Glassmorphism for active light mode with vibrant animated background */
 @keyframes vibrantAuroraButton {
-  0% { background-color: rgba(255, 0, 85, 0.25); border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 85, 0.2); }
-  16% { background-color: rgba(0, 255, 170, 0.25); border-color: rgba(0, 255, 170, 0.4); box-shadow: 0 8px 32px rgba(0, 255, 170, 0.2); }
-  33% { background-color: rgba(0, 136, 255, 0.25); border-color: rgba(0, 136, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 136, 255, 0.2); }
-  50% { background-color: rgba(255, 0, 255, 0.25); border-color: rgba(255, 0, 255, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 255, 0.2); }
-  66% { background-color: rgba(255, 255, 0, 0.25); border-color: rgba(255, 255, 0, 0.4); box-shadow: 0 8px 32px rgba(255, 255, 0, 0.2); }
-  83% { background-color: rgba(255, 170, 0, 0.25); border-color: rgba(255, 170, 0, 0.4); box-shadow: 0 8px 32px rgba(255, 170, 0, 0.2); }
-  100% { background-color: rgba(255, 0, 85, 0.25); border-color: rgba(255, 0, 85, 0.4); box-shadow: 0 8px 32px rgba(255, 0, 85, 0.2); }
+  0% { background-color: rgba(255, 107, 158, 0.1); border-color: rgba(255, 107, 158, 0.25); box-shadow: 0 8px 32px rgba(255, 107, 158, 0.15); }
+  16% { background-color: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.25); box-shadow: 0 8px 32px rgba(74, 222, 128, 0.15); }
+  33% { background-color: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.25); box-shadow: 0 8px 32px rgba(96, 165, 250, 0.15); }
+  50% { background-color: rgba(192, 132, 252, 0.1); border-color: rgba(192, 132, 252, 0.25); box-shadow: 0 8px 32px rgba(192, 132, 252, 0.15); }
+  66% { background-color: rgba(252, 211, 77, 0.1); border-color: rgba(252, 211, 77, 0.25); box-shadow: 0 8px 32px rgba(252, 211, 77, 0.15); }
+  83% { background-color: rgba(251, 146, 60, 0.1); border-color: rgba(251, 146, 60, 0.25); box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15); }
+  100% { background-color: rgba(255, 107, 158, 0.1); border-color: rgba(255, 107, 158, 0.25); box-shadow: 0 8px 32px rgba(255, 107, 158, 0.15); }
 }
 
 .m3-next-btn-dark.transparent-btn {
@@ -1192,13 +1192,13 @@ body {
 
 /* ── Animación vibrante del círculo (Módulo 3) ── */
 @keyframes vibrantAuroraBlink {
-  0% { stroke: #ff0055; }
-  16% { stroke: #00ffaa; }
-  33% { stroke: #0088ff; }
-  50% { stroke: #ff00ff; }
-  66% { stroke: #ffff00; }
-  83% { stroke: #ffaa00; }
-  100% { stroke: #ff0055; }
+  0% { stroke: #ff6b9e; }
+  16% { stroke: #4ade80; }
+  33% { stroke: #60a5fa; }
+  50% { stroke: #c084fc; }
+  66% { stroke: #fcd34d; }
+  83% { stroke: #fb923c; }
+  100% { stroke: #ff6b9e; }
 }
 
 .aurora-circle-vibrant {

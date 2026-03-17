@@ -219,6 +219,7 @@
           return saved !== null ? parseInt(saved, 10) : 2;
         }); // 0 = invisible, 1 = intenso, 2 = normal (gris)
         const gradientRef = useRef(null);
+        const fireworksIntervalRef = useRef(null);
 
         const totalQuestions = questions.length;
 
@@ -297,6 +298,43 @@
           return () => {
              cancelAnimationFrame(animationFrameId);
              if (gradientRef.current) gradientRef.current.style.background = '';
+          };
+        }, [gameMode, lightMode, gameStarted, gameOver]);
+
+        // --- Continuous Fireworks Effect (lightMode === 3) ---
+        useEffect(() => {
+          if (gameMode === 'module3' && lightMode === 3 && gameStarted && !gameOver) {
+            if (!fireworksIntervalRef.current) {
+              const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+              function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+              }
+
+              fireworksIntervalRef.current = setInterval(() => {
+                const particleCount = 40;
+                // launch from near the top-left and top-right occasionally
+                confetti(Object.assign({}, defaults, { 
+                  particleCount, 
+                  origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
+                }));
+                confetti(Object.assign({}, defaults, { 
+                  particleCount, 
+                  origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
+                }));
+              }, 400);
+            }
+          } else {
+            if (fireworksIntervalRef.current) {
+              clearInterval(fireworksIntervalRef.current);
+              fireworksIntervalRef.current = null;
+            }
+          }
+
+          return () => {
+            if (fireworksIntervalRef.current) {
+              clearInterval(fireworksIntervalRef.current);
+              fireworksIntervalRef.current = null;
+            }
           };
         }, [gameMode, lightMode, gameStarted, gameOver]);
 
