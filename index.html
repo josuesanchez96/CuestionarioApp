@@ -220,6 +220,8 @@
         }); // 0 = invisible, 1 = intenso, 2 = normal (gris)
         const gradientRef = useRef(null);
         const fireworksIntervalRef = useRef(null);
+        const touchStartX = useRef(null);
+        const touchEndX = useRef(null);
 
         const totalQuestions = questions.length;
 
@@ -614,6 +616,34 @@
           goToNextQuestion();
         }
 
+        const handleTouchStart = (e) => {
+          touchStartX.current = e.targetTouches[0].clientX;
+        };
+
+        const handleTouchMove = (e) => {
+          touchEndX.current = e.targetTouches[0].clientX;
+        };
+
+        const handleTouchEnd = () => {
+          if (!touchStartX.current || !touchEndX.current) return;
+          const distance = touchStartX.current - touchEndX.current;
+          const minSwipeDistance = 50;
+          if (distance > minSwipeDistance) {
+            // Swipe left -> Next question
+            setRevealed(false);
+            goToNextQuestion();
+          } else if (distance < -minSwipeDistance) {
+            // Swipe right -> Previous question
+            if (currentIndex > 0) {
+              setRevealed(false);
+              setCurrentIndex((prev) => Math.max(0, prev - 1));
+            }
+          }
+          // Reset
+          touchStartX.current = null;
+          touchEndX.current = null;
+        };
+
         const currentQuestion =
           questions.length && currentIndex < questions.length
             ? questions[currentIndex]
@@ -719,7 +749,12 @@
               )}
 
               {gameStarted && !gameOver && gameMode === 'module3' && currentQuestion && (
-                <main className="module3-area">
+                <main 
+                  className="module3-area"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
                   <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
                   <Clock lightMode={lightMode} />
                   <div 
