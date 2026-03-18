@@ -1233,7 +1233,7 @@ body {
 }
 
 .m4-question-text {
-  font-size: 15px;
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
   font-weight: 600;
   line-height: 1.4;
   color: #6b7280;
@@ -1256,7 +1256,7 @@ body {
 }
 
 .m4-answer-text {
-  font-size: 15px;
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
   font-weight: 600;
   color: #6b7280;
   opacity: 0;
