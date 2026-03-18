@@ -655,12 +655,12 @@
             : Math.round((correctCount / (correctCount + wrongCount)) * 100);
 
         return (
-          <div className={`app-root ${gameMode === 'module3' ? 'dark-theme' : ''}`}>
+          <div className={`app-root ${(gameMode === 'module3' || gameMode === 'module4') ? 'dark-theme' : ''}`}>
             <div className="background-gradient" />
             <div className="floating-orb orb-1" />
             <div className="floating-orb orb-2" />
             <div className="app-container">
-              {gameMode !== 'module3' && (
+              {(gameMode !== 'module3' && gameMode !== 'module4') && (
                 <header className="app-header">
                   <h1>Cuestionario App</h1>
                   <p className="subtitle">
@@ -669,7 +669,7 @@
                 </header>
               )}
 
-              <section className="top-bar" style={{ display: gameMode === 'module3' ? 'none' : '' }}>
+              <section className="top-bar" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
                 {rawRows.length === 0 && (
                   <div className="file-input-wrapper">
                     <label className="file-label">
@@ -688,7 +688,7 @@
 
               </section>
 
-              {gameStarted && !gameOver && gameMode !== 'module3' && (
+              {gameStarted && !gameOver && gameMode !== 'module3' && gameMode !== 'module4' && (
                 <section className="progress-bar-wrapper">
                   <div className="progress-bar">
                     <div
@@ -731,6 +731,11 @@
                       <span className="hub-icon">🌙</span>
                       <span className="hub-title">Módulo 3</span>
                       <span className="hub-desc">Foco oscuro, pregunta y respuesta</span>
+                    </button>
+                    <button className="hub-btn" onClick={() => startModule('module4')}>
+                      <span className="hub-icon">🖤</span>
+                      <span className="hub-title">Módulo 4</span>
+                      <span className="hub-desc">Fondo negro y respuestas grises</span>
                     </button>
                   </div>
                   <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
@@ -836,6 +841,33 @@
                     }}>
                       {currentIndex + 1 < totalQuestions ? '▶' : '■'}
                     </button>
+                  </div>
+                </main>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'module4' && currentQuestion && (
+                <main 
+                  className="module4-area"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div className="m4-question-card" onClick={() => setRevealed(!revealed)}>
+                    <div className="m4-question-text">{currentQuestion.question}</div>
+                  </div>
+
+                  <div className="m4-answer-box" onClick={() => setRevealed(!revealed)}>
+                    <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
+                      {currentQuestion.answer}
+                    </div>
+                  </div>
+
+                  <div className="m4-bottom-actions">
+                    <div className="m4-nav-buttons">
+                      <button className="m4-change-btn" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)}>
+                        {Math.round(((currentIndex + 1) / totalQuestions) * 100)}%
+                      </button>
+                    </div>
                   </div>
                 </main>
               )}
@@ -1038,7 +1070,7 @@
                 </div>
               )}
 
-              <footer className="app-footer" style={{ display: gameMode === 'module3' ? 'none' : '' }}>
+              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
                 <span>
                   Carga tu Excel y convierte el estudio en un juego interactivo.
                 </span>

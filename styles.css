@@ -1210,3 +1210,133 @@ body {
   animation: vibrantAuroraBlink 3s linear infinite reverse !important;
   opacity: 0.3 !important;
 }
+
+/* ── Módulo 4: Dark Quiz ──────────────────────────── */
+.module4-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  padding: 20px 20px 80px;
+  box-sizing: border-box;
+}
+
+.m4-question-card {
+  width: 100%;
+  max-width: 650px;
+  text-align: center;
+  padding: 10px;
+}
+
+.m4-question-text {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #6b7280;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m4-answer-box {
+  width: 100%;
+  max-width: 600px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m4-answer-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.m4-answer-text.revealed {
+  opacity: 1;
+}
+
+.m4-bottom-actions {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.m4-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.m4-nav-btn {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #6b7280;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.m4-nav-btn:hover:not(:disabled) {
+  background: #09090b;
+  border-color: #3f3f46;
+  color: #9ca3af;
+}
+
+.m4-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.m4-change-btn {
+  background: transparent;
+  border: 1px solid #1f2937;
+  color: #6b7280;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.m4-change-btn:hover {
+  background: #09090b;
+  border-color: #3f3f46;
+  color: #9ca3af;
+}
+
+.m4-progress {
+  font-size: 0.85rem;
+  color: #3f3f46;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 600px) {
+  .m4-options-container {
+    grid-template-columns: 1fr;
+  }
+}
