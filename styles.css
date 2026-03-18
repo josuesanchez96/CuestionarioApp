@@ -1217,10 +1217,10 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
   min-height: calc(100vh - 60px);
-  padding: 20px 20px 80px;
+  padding: 20px 20px 30px;
   box-sizing: border-box;
 }
 
@@ -1232,7 +1232,7 @@ body {
 }
 
 .m4-question-text {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
   color: #6b7280;
@@ -1255,7 +1255,7 @@ body {
 }
 
 .m4-answer-text {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: #6b7280;
   opacity: 0;
@@ -1267,7 +1267,7 @@ body {
 }
 
 .m4-bottom-actions {
-  margin-top: 40px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1309,7 +1309,7 @@ body {
 
 .m4-change-btn {
   background: transparent;
-  border: 1px solid #1f2937;
+  border: none !important;
   color: #6b7280;
   width: 44px;
   height: 44px;
@@ -1324,8 +1324,7 @@ body {
 }
 
 .m4-change-btn:hover {
-  background: #09090b;
-  border-color: #3f3f46;
+  background: transparent;
   color: #9ca3af;
 }
 
