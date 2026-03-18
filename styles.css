@@ -643,10 +643,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 4px;
   width: 100%;
   position: relative;
-  min-height: calc(100vh - 80px); /* Ensure it covers enough vertical space to show the gradient nicely */
+  padding-bottom: 20px;
+  min-height: calc(100vh - 60px); /* Adjust to give more room for vertical pushing */
 }
 
 .m3-animated-bg {
@@ -764,11 +765,11 @@ body {
 .m3-question-text {
   width: 100%;
   max-width: 600px;
-  min-height: 140px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 10px 20px;
   font-size: clamp(1.1rem, 2.2vw, 1.4rem);
   font-weight: 600;
   text-align: center;
@@ -782,15 +783,15 @@ body {
 .m3-answer-box {
   width: 100%;
   max-width: 600px;
-  min-height: 80px;
+  min-height: 40px;
   background: #000000;
   border: 1px solid #000000;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  margin: 0px 0 25px 0;
+  padding: 10px 20px;
+  margin: 0px 0 10px 0;
   font-size: clamp(1rem, 2vw, 1.3rem);
   font-weight: 600;
   color: #6b7280;
@@ -800,13 +801,24 @@ body {
   -webkit-tap-highlight-color: transparent;
   transition: background 0.2s ease;
 }
+ 
+ .m3-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 4px;
+}
 
 .m3-actions {
   display: flex;
   gap: 10px;
   width: 100%;
   max-width: 320px;
-  margin-top: 10px;
+  margin-top: auto;
+  margin-bottom: 10px;
 }
 
 .m3-next-btn-dark {

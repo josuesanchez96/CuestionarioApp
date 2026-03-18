@@ -773,29 +773,31 @@
                 >
                   <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
                   <Clock lightMode={lightMode} />
-                  <div 
-                    className="m3-question-text" 
-                    style={{ 
-                      color: textVisibility === 1 ? '#ffffff' : '#6b7280',
-                      opacity: textVisibility === 0 ? 0 : 1,
-                      transition: 'color 0.2s, opacity 0.2s'
-                    }}
-                  >
-                    {currentQuestion.question}
-                  </div>
-                  <div
-                    className="m3-answer-box"
-                    style={{ 
-                      color: textVisibility === 1 ? '#ffffff' : '#6b7280',
-                      background: lightMode >= 2 ? 'transparent' : '',
-                      borderColor: lightMode >= 2 ? 'transparent' : '',
-                      opacity: textVisibility === 0 ? 0 : 1,
-                      transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
-                    }}
-                  >
-                    <span style={{ opacity: revealed ? 1 : 0, transition: revealed ? 'opacity 0.2s' : 'none' }}>
-                      {currentQuestion.answer}
-                    </span>
+                  <div className="m3-content-wrapper">
+                    <div 
+                      className="m3-question-text" 
+                      style={{ 
+                        color: textVisibility === 1 ? '#ffffff' : '#6b7280',
+                        opacity: textVisibility === 0 ? 0 : 1,
+                        transition: 'color 0.2s, opacity 0.2s'
+                      }}
+                    >
+                      {currentQuestion.question}
+                    </div>
+                    <div
+                      className="m3-answer-box"
+                      style={{ 
+                        color: textVisibility === 1 ? '#ffffff' : '#6b7280',
+                        background: lightMode >= 2 ? 'transparent' : '',
+                        borderColor: lightMode >= 2 ? 'transparent' : '',
+                        opacity: textVisibility === 0 ? 0 : 1,
+                        transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
+                      }}
+                    >
+                      <span style={{ opacity: revealed ? 1 : 0, transition: revealed ? 'opacity 0.2s' : 'none' }}>
+                        {currentQuestion.answer}
+                      </span>
+                    </div>
                   </div>
                   <div className="m3-actions">
                     <button
