@@ -803,20 +803,20 @@ body {
 
 .m3-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
   margin-top: 10px;
 }
 
 .m3-next-btn-dark {
   flex: 1;
-  padding: 16px 20px;
+  padding: 12px 10px;
   border-radius: 999px;
   border: 1px solid #000000;
   background: #09090b;
   color: #6b7280;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-family: "Segoe UI Symbol", sans-serif;
   font-weight: 700;
   cursor: pointer;
