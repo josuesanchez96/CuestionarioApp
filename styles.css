@@ -1220,7 +1220,7 @@ body {
   gap: 4px;
   width: 100%;
   min-height: calc(100vh - 60px);
-  padding: 20px 20px 30px;
+  padding: 0 0 30px;
   box-sizing: border-box;
 }
 
@@ -1228,7 +1228,8 @@ body {
   width: 100%;
   max-width: 650px;
   text-align: center;
-  padding: 10px;
+  padding: 10px 0;
+  margin-bottom: 0;
 }
 
 .m4-question-text {
@@ -1248,7 +1249,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 10px 0;
   text-align: center;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -1259,11 +1260,11 @@ body {
   font-weight: 600;
   color: #6b7280;
   opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
 .m4-answer-text.revealed {
   opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 .m4-bottom-actions {

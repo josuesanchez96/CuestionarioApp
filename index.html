@@ -540,6 +540,7 @@
         }
 
         function goToNextQuestion() {
+          setRevealed(false);
           setCurrentIndex((idx) => {
             if (idx + 1 >= questions.length) {
               setGameOver(true);
