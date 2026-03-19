@@ -770,7 +770,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 10px 20px;
-  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
   font-weight: 600;
   text-align: center;
   color: #6b7280;
@@ -792,7 +792,7 @@ body {
   justify-content: center;
   padding: 10px 20px;
   margin: 0px 0 10px 0;
-  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-size: clamp(1.2rem, 2.8vw, 1.7rem);
   font-weight: 600;
   color: #6b7280;
   text-align: center;
