@@ -203,6 +203,9 @@
         const [gameMode, setGameMode] = useState(() => {
           return localStorage.getItem('cuestionario_gameMode') || null;
         });
+        const [prevMode, setPrevMode] = useState(() => {
+          return localStorage.getItem('cuestionario_prevMode') || null;
+        });
         const [revealed, setRevealed] = useState(false);
         const [confirm, setConfirm] = useState(null); // { message, onAccept }
         const timeoutRef = useRef(null);
@@ -242,6 +245,10 @@
         }, [gameMode]);
         useEffect(() => { localStorage.setItem('cuestionario_lightMode', lightMode); }, [lightMode]);
         useEffect(() => { localStorage.setItem('cuestionario_textVisibility', textVisibility); }, [textVisibility]);
+        useEffect(() => {
+          if (prevMode) localStorage.setItem('cuestionario_prevMode', prevMode);
+          else localStorage.removeItem('cuestionario_prevMode');
+        }, [prevMode]);
 
         // --- Ambient Background Effect ---
         useEffect(() => {
@@ -559,7 +566,7 @@
             setGameMode(null);
             return;
           }
-          startModule(gameMode);
+          startModule(gameMode, true);
         }
 
         function handleReviewFailed() {
@@ -578,24 +585,33 @@
           setRevealed(false);
         }
 
-        function startModule(mode) {
-          const shuffled = shuffleArray(rawRows);
-          setQuestions(shuffled);
-          setCurrentIndex(0);
-          setScore(0);
-          setCorrectCount(0);
-          setWrongCount(0);
+        function startModule(mode, forceReset = false) {
+          const isStudyModule = mode === 'module3' || mode === 'module4';
+          const wasStudyModule = prevMode === 'module3' || prevMode === 'module4';
+          const shouldContinue = !forceReset && isStudyModule && wasStudyModule && questions.length > 0 && !gameOver;
+
+          if (!shouldContinue) {
+            const shuffled = shuffleArray(rawRows);
+            setQuestions(shuffled);
+            setCurrentIndex(0);
+            setScore(0);
+            setCorrectCount(0);
+            setWrongCount(0);
+            setFailedQuestions([]);
+          }
+
           setGameOver(false);
           setGameStarted(true);
           setGameMode(mode);
+          setPrevMode(mode); // Actualizar para la próxima transición
           setSelectedOption(null);
           setFeedback(null);
-          setFailedQuestions([]);
           setRevealed(false);
           // Mantener estado de animación (lightMode y textVisibility) al reiniciar la ronda
         }
 
         function handleChangeModule() {
+          setPrevMode(gameMode);
           setGameStarted(false);
           setGameOver(false);
           setGameMode(null);
@@ -850,7 +866,7 @@
                       className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule);
+                        handleChangeModule();
                       }}
                       title="Cambiar módulo"
                     >
@@ -889,7 +905,7 @@
                     <div className="m4-nav-buttons">
                       <button className="m4-change-btn" onClick={(e) => {
                         e.stopPropagation();
-                        askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule);
+                        handleChangeModule();
                       }}>
                         {Math.round(((currentIndex + 1) / totalQuestions) * 100)}%
                       </button>
@@ -1010,7 +1026,7 @@
                   <button className="ghost-button" onClick={() => askConfirm('¿Reiniciar la ronda desde el principio?', handleRestart)}>
                     Reiniciar ronda
                   </button>
-                  <button className="ghost-button" onClick={() => askConfirm('¿Cambiar de módulo? Se perderá el progreso actual.', handleChangeModule)}>
+                  <button className="ghost-button" onClick={handleChangeModule}>
                     🔀 Cambiar módulo
                   </button>
                 </div>
