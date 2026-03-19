@@ -770,7 +770,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 10px 20px;
-  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
   font-weight: 600;
   text-align: center;
   color: #6b7280;
@@ -783,7 +783,7 @@ body {
 .m3-answer-box {
   width: 100%;
   max-width: 600px;
-  min-height: 40px;
+  min-height: 80px;
   background: #000000;
   border: 1px solid #000000;
   border-radius: 16px;
@@ -792,7 +792,7 @@ body {
   justify-content: center;
   padding: 10px 20px;
   margin: 0px 0 10px 0;
-  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
   font-weight: 600;
   color: #6b7280;
   text-align: center;
