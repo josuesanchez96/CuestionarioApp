@@ -853,6 +853,8 @@ body {
   justify-content: center;
   position: relative;
   z-index: 1;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .m3-next-btn-dark:hover:not(:disabled) {
