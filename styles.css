@@ -814,36 +814,50 @@ body {
 
 .m3-actions {
   display: flex;
-  gap: 10px;
   width: 100%;
-  max-width: 320px;
+  max-width: 500px;
   margin-top: auto;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+  background: rgba(9, 9, 11, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.m3-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(52, 211, 153, 0.6));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
 }
 
 .m3-next-btn-dark {
   flex: 1;
-  padding: 12px 10px;
-  border-radius: 999px;
-  border: 1px solid #000000;
-  background: #09090b;
-  color: #6b7280;
+  padding: 14px 10px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
   font-size: 1.25rem;
   font-family: "Segoe UI Symbol", sans-serif;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
-  transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, opacity 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .m3-next-btn-dark:hover:not(:disabled) {
-  transform: translateY(-2px);
-  background: #111827;
-  border-color: #4b5563;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .m3-next-btn-dark:disabled {
