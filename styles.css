@@ -818,13 +818,19 @@ body {
   max-width: 500px;
   margin-top: auto;
   margin-bottom: 20px;
-  background: rgba(9, 9, 11, 0.8);
+  background: rgba(31, 41, 55, 0.4); /* Matches clock circular bg: #1f2937 at 40% */
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(10px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.m3-actions.m3-aurora-mode {
+  animation: vibrantAuroraBackground 3s linear infinite reverse; /* Synchronized with clock background pulsation */
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .m3-progress-fill {
@@ -835,6 +841,12 @@ body {
   background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(52, 211, 153, 0.6));
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
+}
+
+.m3-aurora-mode .m3-progress-fill {
+  background: transparent; /* Reset regular background */
+  animation: vibrantAuroraFill 3s linear infinite;
+  opacity: 0.7;
 }
 
 .m3-next-btn-dark {
@@ -1361,6 +1373,26 @@ body {
   font-size: 0.85rem;
   color: #3f3f46;
   letter-spacing: 0.05em;
+}
+
+@keyframes vibrantAuroraFill {
+  0% { background-color: #ff6b9e; }
+  16% { background-color: #4ade80; }
+  33% { background-color: #60a5fa; }
+  50% { background-color: #c084fc; }
+  66% { background-color: #fcd34d; }
+  83% { background-color: #fb923c; }
+  100% { background-color: #ff6b9e; }
+}
+
+@keyframes vibrantAuroraBackground {
+  0% { background-color: rgba(255, 107, 158, 0.2); }
+  16% { background-color: rgba(74, 222, 128, 0.2); }
+  33% { background-color: rgba(96, 165, 250, 0.2); }
+  50% { background-color: rgba(192, 132, 252, 0.2); }
+  66% { background-color: rgba(252, 211, 77, 0.2); }
+  83% { background-color: rgba(251, 146, 60, 0.2); }
+  100% { background-color: rgba(255, 107, 158, 0.2); }
 }
 
 @media (max-width: 600px) {
