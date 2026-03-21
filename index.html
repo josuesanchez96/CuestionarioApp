@@ -968,7 +968,11 @@
               )}
 
               {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
-                <main className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}>
+                <main 
+                  className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}
+                  onClick={() => setIsPaused(!isPaused)}
+                  onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                >
                   <div className="m5-top-layout">
                     <div className="m5-progress-text">
                       {currentIndex + 1} / {totalQuestions}
@@ -987,22 +991,39 @@
                       className="m5-progress-circle-large" 
                       width="80" height="80" viewBox="0 0 80 80" 
                     >
+                      <defs>
+                        <clipPath id="m5-flameMask">
+                          <circle cx="40" cy="40" r="34" />
+                        </clipPath>
+                        <radialGradient id="m5-glowGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                          <stop offset="0%" stopColor="white" stopOpacity="0.9" />
+                          <stop offset="40%" stopColor="#fef08a" stopOpacity="0.4" />
+                          <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
+                        </radialGradient>
+                      </defs>
                       <circle className="m5-circle-bg" cx="40" cy="40" r="34" />
-                      <circle 
-                        className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
-                        cx="40" cy="40" r="34" 
-                        strokeDasharray="213.6"
-                        strokeDashoffset={213.6 - (Math.min(1, (revealed ? (m5Elapsed - m5QDuration) : m5Elapsed) / (revealed ? m5ADuration : m5QDuration)) * 213.6)}
-                      />
+                      {isPaused && (
+                        <g className="m5-glow-wrapper">
+                          {/* Main soft background glow */}
+                          <circle cx="40" cy="40" r="36" fill="url(#m5-glowGrad)" className="m5-glow-pulse" />
+                          
+                          {/* Inner glowing core - made larger */}
+                          <circle cx="40" cy="40" r="18" fill="white" className="m5-core-pulse" />
+                        </g>
+                      )}
+                      {!isPaused && (
+                        <circle 
+                          className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
+                          cx="40" cy="40" r="34" 
+                          strokeDasharray="213.6"
+                          strokeDashoffset={213.6 - (Math.min(1, (revealed ? (m5Elapsed - m5QDuration) : m5Elapsed) / (revealed ? m5ADuration : m5QDuration)) * 213.6)}
+                        />
+                      )}
                     </svg>
                     {isPaused && <div className="m5-paused-text">PAUSADO</div>}
                   </div>
 
-                  <div 
-                    className="m5-content" 
-                    onClick={() => setIsPaused(!isPaused)}
-                    onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
-                  >
+                  <div className="m5-content">
                     {!revealed ? (
                       <div className="m5-question m5-fade-in">{currentQuestion.question}</div>
                     ) : (

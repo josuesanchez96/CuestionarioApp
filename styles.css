@@ -1436,10 +1436,13 @@ body {
   z-index: 99;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  outline: none; /* remove any focus box */
 }
 
 .m5-progress-circle-large {
   transform: rotate(-90deg);
+  overflow: visible !important; /* allow glow to exceed 80x80 area */
+  pointer-events: none; /* let clicks pass through to the screen/content */
 }
 
 .m5-circle-bg {
@@ -1463,15 +1466,65 @@ body {
   stroke: #4ade80; /* subtle calm green */
 }
 
+.m5-circle-paused {
+  transition: stroke-dashoffset 0.8s ease-in-out, stroke 0.3s ease !important;
+  animation: m5-flamePulse 1.2s infinite alternate ease-in-out !important;
+}
+
+@keyframes m5-flamePulse {
+  0% {
+    stroke: #ea580c;
+    filter: drop-shadow(0 0 6px rgba(234, 88, 12, 0.6));
+  }
+  50% {
+    stroke: #fb923c;
+    filter: drop-shadow(0 0 12px rgba(251, 146, 60, 0.8));
+  }
+  100% {
+    stroke: #fef08a;
+    filter: drop-shadow(0 0 18px rgba(254, 240, 138, 0.9));
+  }
+}
+
+.m5-glow-wrapper {
+  animation: m5-glowAppear 0.8s ease-out forwards;
+}
+
+@keyframes m5-glowAppear {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.m5-glow-pulse {
+  animation: m5-glowBreathing 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes m5-glowBreathing {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.m5-core-pulse {
+  animation: m5-coreBreathing 1.5s ease-in-out infinite alternate;
+  transform-origin: center;
+  filter: drop-shadow(0 0 15px white);
+}
+
+@keyframes m5-coreBreathing {
+  0% { transform: scale(1); filter: drop-shadow(0 0 10px white); }
+  100% { transform: scale(1.1); filter: drop-shadow(0 0 25px white); }
+}
+
 .m5-paused-text {
   position: absolute;
   top: 100%;
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.2em;
-  color: rgba(255, 255, 255, 0.3);
-  animation: pulseOpacity 2s infinite;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
 }
 
 @keyframes pulseOpacity {
@@ -1545,7 +1598,7 @@ body {
 }
 
 .m5-question, .m5-answer {
-  font-size: clamp(1.8rem, 4.5vw, 3.2rem);
+  font-size: clamp(1.3rem, 3.5vw, 2.4rem);
   font-weight: 500;
   text-align: center;
   line-height: 1.4;
