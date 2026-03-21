@@ -1404,3 +1404,157 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Módulo 5: Flash Automático Minimalista ──────────────────────────── */
+.module5-area {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #121212;
+  color: #E0E0E0;
+  z-index: 100;
+  padding: 24px;
+  user-select: none;
+  transition: background-color 0.6s ease;
+}
+
+.m5-revealed-bg {
+  background-color: #0d141e; /* un azul-slate muy oscuro y elegante */
+}
+
+.m5-center-circle-container {
+  position: absolute;
+  bottom: 8%; /* centered horizontally at the bottom */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 99;
+  cursor: pointer;
+}
+
+.m5-progress-circle-large {
+  transform: rotate(-90deg);
+}
+
+.m5-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.03);
+  stroke-width: 8;
+}
+
+.m5-circle-fill-large {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.15s linear, stroke 0.6s ease;
+}
+
+.m5-circle-question {
+  stroke: rgba(255, 255, 255, 0.15); /* very subtle so it doesn't distract */
+}
+
+.m5-circle-answer {
+  stroke: #4ade80; /* subtle calm green */
+}
+
+.m5-paused-text {
+  position: absolute;
+  top: 100%;
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.3);
+  animation: pulseOpacity 2s infinite;
+}
+
+@keyframes pulseOpacity {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+.m5-top-layout {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 101;
+  pointer-events: none;
+}
+
+.m5-progress-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  pointer-events: auto;
+}
+
+.m5-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 1.2rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+}
+
+.m5-close-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.m5-close-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.m5-close-btn:hover .m5-close-text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.m5-content {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.m5-question, .m5-answer {
+  font-size: clamp(1.8rem, 4.5vw, 3.2rem);
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+
+.m5-fade-in {
+  animation: m5-fadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes m5-fadeIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}

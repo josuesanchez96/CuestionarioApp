@@ -226,6 +226,9 @@
         const touchStartX = useRef(null);
         const touchEndX = useRef(null);
 
+        const [isPaused, setIsPaused] = useState(false);
+        const [m5Elapsed, setM5Elapsed] = useState(0);
+
         const totalQuestions = questions.length;
 
         // --- Persistent Storage Sync ---
@@ -346,6 +349,54 @@
             }
           };
         }, [gameMode, lightMode, gameStarted, gameOver]);
+
+        const currentQuestion =
+          questions.length && currentIndex < questions.length
+            ? questions[currentIndex]
+            : null;
+
+        // --- Dynamic Duration for Module 5 ---
+        const calcDuration = (text, minMs) => {
+             const length = text ? String(text).length : 0;
+             // Base 1.5s + 60ms per character, capped at 20s max.
+             return Math.max(minMs, Math.min(20000, 1500 + length * 60));
+        };
+        const m5QDuration = currentQuestion ? calcDuration(currentQuestion.question, 3000) : 3000;
+        const m5ADuration = currentQuestion ? calcDuration(currentQuestion.answer, 2000) : 2000;
+
+        // --- Flash Automatic Mode (Module 5) Effect ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver || !currentQuestion) return;
+
+          if (isPaused) return;
+
+          const interval = setInterval(() => {
+            setM5Elapsed(prev => prev + 100);
+          }, 100);
+
+          return () => clearInterval(interval);
+        }, [gameMode, gameStarted, gameOver, currentQuestion, isPaused]);
+
+        useEffect(() => {
+           if (gameMode !== 'module5' || !gameStarted || gameOver || !currentQuestion) return;
+
+           if (!revealed && m5Elapsed >= m5QDuration) {
+             setRevealed(true);
+           } else if (revealed && m5Elapsed >= m5QDuration + m5ADuration) {
+             goToNextQuestion();
+             setM5Elapsed(0);
+             setRevealed(false);
+           }
+        }, [m5Elapsed, revealed, m5QDuration, m5ADuration, gameMode, gameStarted, gameOver, currentQuestion]);
+
+        // Reset when changing question manually or mode
+        useEffect(() => {
+          if (gameMode === 'module5') {
+            setM5Elapsed(0);
+            setRevealed(false);
+            setIsPaused(false);
+          }
+        }, [currentIndex, gameMode]);
 
         // --- Core Effects ---
 
@@ -661,10 +712,6 @@
           touchEndX.current = null;
         };
 
-        const currentQuestion =
-          questions.length && currentIndex < questions.length
-            ? questions[currentIndex]
-            : null;
 
         const successPercentage =
           correctCount + wrongCount === 0
@@ -753,6 +800,11 @@
                       <span className="hub-icon">🖤</span>
                       <span className="hub-title">Módulo 4</span>
                       <span className="hub-desc">Fondo negro y respuestas grises</span>
+                    </button>
+                    <button className="hub-btn" onClick={() => startModule('module5')}>
+                      <span className="hub-icon">⚡</span>
+                      <span className="hub-title">Módulo 5</span>
+                      <span className="hub-desc">Flash automático (modo enfoque)</span>
                     </button>
                   </div>
                   <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
@@ -911,6 +963,51 @@
                         {Math.round(((currentIndex + 1) / totalQuestions) * 100)}%
                       </button>
                     </div>
+                  </div>
+                </main>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
+                <main className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}>
+                  <div className="m5-top-layout">
+                    <div className="m5-progress-text">
+                      {currentIndex + 1} / {totalQuestions}
+                    </div>
+                    <button 
+                      className="m5-close-btn" 
+                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                      title="Salir"
+                    >
+                      <span className="m5-close-text">Salir</span> ⛌
+                    </button>
+                  </div>
+
+                  <div className="m5-center-circle-container" onClick={(e) => { e.stopPropagation(); setIsPaused(!isPaused); }}>
+                    <svg 
+                      className="m5-progress-circle-large" 
+                      width="80" height="80" viewBox="0 0 80 80" 
+                    >
+                      <circle className="m5-circle-bg" cx="40" cy="40" r="34" />
+                      <circle 
+                        className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
+                        cx="40" cy="40" r="34" 
+                        strokeDasharray="213.6"
+                        strokeDashoffset={213.6 - (Math.min(1, (revealed ? (m5Elapsed - m5QDuration) : m5Elapsed) / (revealed ? m5ADuration : m5QDuration)) * 213.6)}
+                      />
+                    </svg>
+                    {isPaused && <div className="m5-paused-text">PAUSADO</div>}
+                  </div>
+
+                  <div 
+                    className="m5-content" 
+                    onClick={() => setIsPaused(!isPaused)}
+                    onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                  >
+                    {!revealed ? (
+                      <div className="m5-question m5-fade-in">{currentQuestion.question}</div>
+                    ) : (
+                      <div className="m5-answer m5-fade-in">{currentQuestion.answer}</div>
+                    )}
                   </div>
                 </main>
               )}
