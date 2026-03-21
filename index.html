@@ -970,7 +970,6 @@
               {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
                 <main 
                   className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}
-                  onClick={() => setIsPaused(!isPaused)}
                   onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
                 >
                   <div className="m5-top-layout">
