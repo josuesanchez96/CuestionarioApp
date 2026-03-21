@@ -358,11 +358,11 @@
         // --- Dynamic Duration for Module 5 ---
         const calcDuration = (text, minMs) => {
              const length = text ? String(text).length : 0;
-             // Base 1.5s + 60ms per character, capped at 20s max.
-             return Math.max(minMs, Math.min(20000, 1500 + length * 60));
+             // Base 3.0s + 100ms per character, capped at 30s max.
+             return Math.max(minMs, Math.min(30000, 3000 + length * 100));
         };
-        const m5QDuration = currentQuestion ? calcDuration(currentQuestion.question, 3000) : 3000;
-        const m5ADuration = currentQuestion ? calcDuration(currentQuestion.answer, 2000) : 2000;
+        const m5QDuration = currentQuestion ? calcDuration(currentQuestion.question, 4500) : 4500;
+        const m5ADuration = currentQuestion ? calcDuration(currentQuestion.answer, 3000) : 3000;
 
         // --- Flash Automatic Mode (Module 5) Effect ---
         useEffect(() => {

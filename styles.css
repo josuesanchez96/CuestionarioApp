@@ -1435,6 +1435,7 @@ body {
   align-items: center;
   z-index: 99;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .m5-progress-circle-large {
@@ -1540,6 +1541,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: default;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .m5-question, .m5-answer {
