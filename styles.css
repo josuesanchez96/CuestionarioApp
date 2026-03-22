@@ -1421,6 +1421,51 @@ body {
   transition: background-color 0.6s ease;
 }
 
+/* Module 5 Starry Background */
+.m5-stars-container {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.6;
+}
+
+.m5-star-layer {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+}
+
+.m5-star-layer::after {
+  content: " ";
+  position: absolute;
+  width: 1px; height: 1px;
+  background: transparent;
+}
+
+.m5-stars-1::after {
+  width: 1px; height: 1px;
+  box-shadow: 5vw 10vh #fff, 15vw 80vh #fff, 25vw 30vh #fff, 35vw 60vh #fff, 45vw 90vh #fff, 55vw 20vh #fff, 65vw 50vh #fff, 75vw 10vh #fff, 85vw 70vh #fff, 95vw 40vh #fff, 8vw 55vh #fff, 18vw 25vh #fff, 28vw 75vh #fff, 38vw 15vh #fff, 48vw 85vh #fff;
+  animation: m5-twinkle 4s infinite ease-in-out;
+}
+
+.m5-stars-2::after {
+  width: 2px; height: 2px;
+  box-shadow: 10vw 20vh #fff, 20vw 50vh #fff, 30vw 80vh #fff, 40vw 10vh #fff, 50vw 40vh #fff, 60vw 90vh #fff, 70vw 30vh #fff, 80vw 60vh #fff, 90vw 20vh #fff, 5vw 85vh #fff, 25vw 15vh #fff, 45vw 45vh #fff, 65vw 75vh #fff, 85vw 25vh #fff, 95vw 95vh #fff;
+  animation: m5-twinkle 6s infinite ease-in-out 1s;
+}
+
+.m5-stars-3::after {
+  width: 1.5px; height: 1.5px;
+  box-shadow: 12vw 15vh #fff, 22vw 45vh #fff, 32vw 75vh #fff, 42vw 25vh #fff, 52vw 65vh #fff, 62vw 35vh #fff, 72vw 95vh #fff, 82vw 55vh #fff, 92vw 15vh #fff, 2vw 25vh #fff, 26vw 85vh #fff, 46vw 15vh #fff, 66vw 45vh #fff, 86vw 75vh #fff, 96vw 25vh #fff;
+  animation: m5-twinkle 5s infinite ease-in-out 2s;
+}
+
+@keyframes m5-twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
 .m5-revealed-bg {
   background-color: #0d141e; /* un azul-slate muy oscuro y elegante */
 }
@@ -1453,17 +1498,16 @@ body {
 
 .m5-circle-fill-large {
   fill: none;
-  stroke-width: 8;
-  stroke-linecap: round;
-  transition: stroke-dashoffset 0.15s linear, stroke 0.6s ease;
+  stroke: none;
+  transition: fill 0.4s ease;
 }
 
 .m5-circle-question {
-  stroke: rgba(255, 255, 255, 0.15); /* very subtle so it doesn't distract */
+  fill: transparent;
 }
 
 .m5-circle-answer {
-  stroke: #4ade80; /* subtle calm green */
+  fill: transparent;
 }
 
 .m5-circle-paused {
@@ -1486,6 +1530,25 @@ body {
   }
 }
 
+.m5-ripple {
+  animation: m5-rippleEffect 0.8s cubic-bezier(0, 0.4, 0.5, 1) forwards;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+@keyframes m5-rippleEffect {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+    stroke-width: 4;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+    stroke-width: 0.5;
+  }
+}
+
 .m5-glow-wrapper {
   animation: m5-glowAppear 0.8s ease-out forwards;
   transform-box: fill-box;
@@ -1503,9 +1566,20 @@ body {
   transform-origin: center;
 }
 
+.m5-glow-pulse-fast {
+  animation: m5-glowBreathing-fast 1s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 @keyframes m5-glowBreathing {
   0%, 100% { opacity: 0.3; transform: scale(1); }
   50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+@keyframes m5-glowBreathing-fast {
+  0%, 100% { opacity: 0.4; transform: scale(1.1); }
+  50% { opacity: 0.8; transform: scale(1.4); }
 }
 
 .m5-core-pulse {
@@ -1515,9 +1589,21 @@ body {
   filter: drop-shadow(0 0 15px white);
 }
 
+.m5-core-pulse-fast {
+  animation: m5-coreBreathing-fast 0.6s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+  filter: drop-shadow(0 0 20px white);
+}
+
 @keyframes m5-coreBreathing {
   0% { transform: scale(1); filter: drop-shadow(0 0 10px white); }
   100% { transform: scale(1.1); filter: drop-shadow(0 0 25px white); }
+}
+
+@keyframes m5-coreBreathing-fast {
+  0% { transform: scale(1.1); filter: drop-shadow(0 0 15px white); }
+  100% { transform: scale(1.4); filter: drop-shadow(0 0-35px white); }
 }
 
 .m5-paused-text {

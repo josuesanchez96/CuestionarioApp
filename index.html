@@ -225,9 +225,7 @@
         const fireworksIntervalRef = useRef(null);
         const touchStartX = useRef(null);
         const touchEndX = useRef(null);
-
-        const [isPaused, setIsPaused] = useState(false);
-        const [m5Elapsed, setM5Elapsed] = useState(0);
+        const [m5Ripple, setM5Ripple] = useState(false);
 
         const totalQuestions = questions.length;
 
@@ -355,46 +353,11 @@
             ? questions[currentIndex]
             : null;
 
-        // --- Dynamic Duration for Module 5 ---
-        const calcDuration = (text, minMs) => {
-             const length = text ? String(text).length : 0;
-             // Base 2.2s + 65ms per character, capped at 30s max.
-             return Math.max(minMs, Math.min(30000, 2200 + length * 65));
-        };
-        const m5QDuration = currentQuestion ? calcDuration(currentQuestion.question, 3500) : 3500;
-        const m5ADuration = currentQuestion ? calcDuration(currentQuestion.answer, 2500) : 2500;
-
-        // --- Flash Automatic Mode (Module 5) Effect ---
-        useEffect(() => {
-          if (gameMode !== 'module5' || !gameStarted || gameOver || !currentQuestion) return;
-
-          if (isPaused) return;
-
-          const interval = setInterval(() => {
-            setM5Elapsed(prev => prev + 100);
-          }, 100);
-
-          return () => clearInterval(interval);
-        }, [gameMode, gameStarted, gameOver, currentQuestion, isPaused]);
-
-        useEffect(() => {
-           if (gameMode !== 'module5' || !gameStarted || gameOver || !currentQuestion) return;
-
-           if (!revealed && m5Elapsed >= m5QDuration) {
-             setRevealed(true);
-           } else if (revealed && m5Elapsed >= m5QDuration + m5ADuration) {
-             goToNextQuestion();
-             setM5Elapsed(0);
-             setRevealed(false);
-           }
-        }, [m5Elapsed, revealed, m5QDuration, m5ADuration, gameMode, gameStarted, gameOver, currentQuestion]);
 
         // Reset when changing question manually or mode
         useEffect(() => {
           if (gameMode === 'module5') {
-            setM5Elapsed(0);
             setRevealed(false);
-            setIsPaused(false);
           }
         }, [currentIndex, gameMode]);
 
@@ -972,6 +935,11 @@
                   className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}
                   onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
                 >
+                  <div className="m5-stars-container">
+                    <div className="m5-star-layer m5-stars-1"></div>
+                    <div className="m5-star-layer m5-stars-2"></div>
+                    <div className="m5-star-layer m5-stars-3"></div>
+                  </div>
                   <div className="m5-top-layout">
                     <div className="m5-progress-text">
                       {currentIndex + 1} / {totalQuestions}
@@ -985,7 +953,16 @@
                     </button>
                   </div>
 
-                  <div className="m5-center-circle-container" onClick={(e) => { e.stopPropagation(); setIsPaused(!isPaused); }}>
+                  <div className="m5-center-circle-container" onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setM5Ripple(false);
+                    setTimeout(() => setM5Ripple(true), 10);
+                    if (!revealed) {
+                      setRevealed(true);
+                    } else {
+                      goToNextQuestion();
+                    }
+                  }}>
                     <svg 
                       className="m5-progress-circle-large" 
                       width="80" height="80" viewBox="0 0 80 80" 
@@ -1001,25 +978,32 @@
                         </radialGradient>
                       </defs>
                       <circle className="m5-circle-bg" cx="40" cy="40" r="34" />
-                      {isPaused && (
-                        <g className="m5-glow-wrapper">
-                          {/* Main soft background glow */}
-                          <circle cx="40" cy="40" r="36" fill="url(#m5-glowGrad)" className="m5-glow-pulse" />
-                          
-                          {/* Inner glowing core - made larger */}
-                          <circle cx="40" cy="40" r="18" fill="white" className="m5-core-pulse" />
-                        </g>
-                      )}
-                      {!isPaused && (
+                      
+                      <g className="m5-glow-wrapper">
+                        {/* Main soft background glow */}
+                        <circle cx="40" cy="40" r="36" fill="url(#m5-glowGrad)" className={revealed ? "m5-glow-pulse-fast" : "m5-glow-pulse"} />
+                        
+                        {/* Inner glowing core - made larger */}
+                        <circle cx="40" cy="40" r="18" fill="white" className={revealed ? "m5-core-pulse-fast" : "m5-core-pulse"} />
+                      </g>
+
+                      {m5Ripple && (
                         <circle 
-                          className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
+                          className="m5-ripple" 
                           cx="40" cy="40" r="34" 
-                          strokeDasharray="213.6"
-                          strokeDashoffset={213.6 - (Math.min(1, (revealed ? (m5Elapsed - m5QDuration) : m5Elapsed) / (revealed ? m5ADuration : m5QDuration)) * 213.6)}
+                          fill="none" 
+                          stroke="rgba(255, 255, 255, 0.6)" 
+                          strokeWidth="2" 
                         />
                       )}
+
+                      <circle 
+                        className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
+                        cx="40" cy="40" r="34" 
+                        strokeDasharray="213.6"
+                        strokeDashoffset={0}
+                      />
                     </svg>
-                    {isPaused && <div className="m5-paused-text">PAUSADO</div>}
                   </div>
 
                   <div className="m5-content">
