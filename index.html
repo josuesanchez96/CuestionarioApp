@@ -611,6 +611,46 @@
           };
         }, [gameMode, gameStarted, gameOver]);
         
+        // --- Screen Wake Lock ---
+        useEffect(() => {
+          let wakeLock = null;
+
+          const requestWakeLock = async () => {
+            if ('wakeLock' in navigator && document.visibilityState === 'visible') {
+              try {
+                wakeLock = await navigator.wakeLock.request('screen');
+              } catch (err) {
+                console.warn('Wake Lock request failed:', err);
+              }
+            }
+          };
+
+          const releaseWakeLock = () => {
+            if (wakeLock) {
+              wakeLock.release().catch(() => {});
+              wakeLock = null;
+            }
+          };
+
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && gameStarted && !gameOver && gameMode === 'module4') {
+              requestWakeLock();
+            }
+          };
+
+          if (gameStarted && !gameOver && gameMode === 'module4') {
+            requestWakeLock();
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+          } else {
+            releaseWakeLock();
+          }
+
+          return () => {
+            releaseWakeLock();
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+          };
+        }, [gameStarted, gameOver, gameMode]);
+        
         // --- Keyboard Controls for Module 5 (Robust Ref-based) ---
         const m5StateRef = useRef({ revealed, currentIndex });
         useEffect(() => {
