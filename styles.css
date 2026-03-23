@@ -706,18 +706,16 @@ body {
 }
 
 .clock-water-wave {
-  fill: #0891b2; /* Cyan oscuro elegante para fondos negros */
-  opacity: 0.25;
+  fill: url(#m3-waterGrad); 
+  opacity: 0.5; /* Mayor opacidad para que se vea como la barra de progreso */
   transition: fill 0.5s ease;
   animation: waveAction 4s linear infinite;
 }
 
-.clock-water-wave.pm-color {
-  fill: #0d9488; /* Verde/Teal oscuro que contrasta con el círculo naranja */
-}
+
 
 .clock-water-wave-2 {
-  opacity: 0.25;
+  opacity: 0.3; /* Aumentado de 0.25 */
   animation: waveAction2 6s linear infinite;
 }
 
@@ -838,9 +836,14 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.4), rgba(52, 211, 153, 0.6));
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #3b82f6; /* Azul AM */
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
   z-index: 0;
+  opacity: 1; /* Tono intenso para coincidir con el borde del reloj */
+}
+
+.m3-progress-fill.pm-color {
+  background: #f97316; /* Naranja PM */
 }
 
 .m3-aurora-mode .m3-progress-fill {
@@ -1685,6 +1688,139 @@ body {
   justify-content: center;
   cursor: default;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Animación del Cometa */
+.m5-comet {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 15px 3px rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  top: -20px;
+  left: -20px;
+}
+
+.m5-comet::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 120px;
+  height: 2px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.8), transparent);
+  transform: translateY(-50%);
+  border-radius: 2px;
+}
+
+.m5-comet-dir-0 { animation: m5-move-tr-bl 15s linear forwards; }
+.m5-comet-dir-1 { animation: m5-move-tl-br 15s linear forwards; }
+.m5-comet-dir-2 { animation: m5-move-r-l 15s linear forwards; }
+.m5-comet-dir-3 { animation: m5-move-l-r 15s linear forwards; }
+
+@keyframes m5-move-tr-bl {
+  0% { transform: translate(110vw, -10vh) rotate(-45deg); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(-10vw, 110vh) rotate(-45deg); opacity: 0; }
+}
+@keyframes m5-move-tl-br {
+  0% { transform: translate(-10vw, -10vh) rotate(-135deg); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(110vw, 110vh) rotate(-135deg); opacity: 0; }
+}
+@keyframes m5-move-r-l {
+  0% { transform: translate(110vw, 30vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(-10vw, 50vh) rotate(0deg); opacity: 0; }
+}
+@keyframes m5-move-l-r {
+  0% { transform: translate(-10vw, 40vh) rotate(180deg); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(110vw, 60vh) rotate(180deg); opacity: 0; }
+}
+
+/* --- DIRECCIONES COMPARTIDAS PARA PLANETAS (Júpiter, Marte, Luna) --- */
+@keyframes m5-move-0 {
+  0% { transform: translate(110vw, -10vh); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(-10vw, 110vh); opacity: 0; }
+}
+@keyframes m5-move-1 {
+  0% { transform: translate(-10vw, -10vh); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(110vw, 110vh); opacity: 0; }
+}
+@keyframes m5-move-2 {
+  0% { transform: translate(110vw, 30vh); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(-10vw, 50vh); opacity: 0; }
+}
+@keyframes m5-move-3 {
+  0% { transform: translate(-10vw, 40vh); opacity: 0; }
+  10% { opacity: 1; } 90% { opacity: 1; }
+  100% { transform: translate(110vw, 60vh); opacity: 0; }
+}
+
+/* Júpiter */
+.m5-jupiter { position: absolute; top: -120px; left: -120px; width: 65px; height: 65px; background: linear-gradient(to bottom, #92400e, #d97706, #fbbf24, #d97706, #92400e); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 2; box-shadow: 0 0 20px rgba(146, 64, 14, 0.4); }
+.m5-jupiter-dir-0 { animation: m5-move-0 25s linear forwards; }
+.m5-jupiter-dir-1 { animation: m5-move-1 25s linear forwards; }
+.m5-jupiter-dir-2 { animation: m5-move-2 25s linear forwards; }
+.m5-jupiter-dir-3 { animation: m5-move-3 25s linear forwards; }
+
+/* Marte */
+.m5-mars { position: absolute; top: -80px; left: -80px; width: 22px; height: 22px; background: radial-gradient(circle at 30% 30%, #ef4444, #7f1d1d); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 2; box-shadow: 0 0 12px rgba(239, 68, 68, 0.4); }
+.m5-mars-dir-0 { animation: m5-move-0 18s linear forwards; }
+.m5-mars-dir-1 { animation: m5-move-1 18s linear forwards; }
+.m5-mars-dir-2 { animation: m5-move-2 18s linear forwards; }
+.m5-mars-dir-3 { animation: m5-move-3 18s linear forwards; }
+
+/* Luna */
+.m5-moon { position: absolute; top: -100px; left: -100px; width: 28px; height: 28px; background: radial-gradient(circle at 30% 30%, #d1d5db, #4b5563); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 2; box-shadow: 0 0 15px rgba(209, 213, 219, 0.3); }
+.m5-moon-dir-0 { animation: m5-move-0 20s linear forwards; }
+.m5-moon-dir-1 { animation: m5-move-1 20s linear forwards; }
+.m5-moon-dir-2 { animation: m5-move-2 20s linear forwards; }
+.m5-moon-dir-3 { animation: m5-move-3 20s linear forwards; }
+
+/* Saturno */
+.m5-saturn { position: absolute; top: -100px; left: -100px; width: 50px; height: 50px; background: radial-gradient(circle at 30% 30%, #fde68a, #d97706); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 3; box-shadow: 0 0 25px rgba(217, 119, 6, 0.4); }
+.m5-saturn::after { content: ""; position: absolute; top: 50%; left: 50%; width: 90px; height: 18px; border: 4px solid rgba(253, 230, 138, 0.4); border-radius: 50%; transform: translate(-50%, -50%) rotate(25deg); box-shadow: 0 0 12px rgba(253, 230, 138, 0.2); }
+.m5-saturn-dir-0 { animation: m5-move-0 15s linear forwards; }
+.m5-saturn-dir-1 { animation: m5-move-1 15s linear forwards; }
+.m5-saturn-dir-2 { animation: m5-move-2 15s linear forwards; }
+.m5-saturn-dir-3 { animation: m5-move-3 15s linear forwards; }
+
+/* Galaxia */
+.m5-galaxy { position: absolute; top: -150px; left: -150px; width: 25rem; height: 12rem; background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.8) 0%, rgba(147, 51, 234, 0.4) 20%, rgba(79, 70, 229, 0.2) 50%, transparent 80%); filter: blur(15px); border-radius: 50%; pointer-events: none; opacity: 0; z-index: 1; }
+.m5-galaxy::before { content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 5rem; height: 2rem; background: white; filter: blur(8px); border-radius: 50%; box-shadow: 0 0 40px 15px white; }
+.m5-galaxy-dir-0 { animation: m5-move-galaxy-0 45s linear forwards; }
+.m5-galaxy-dir-1 { animation: m5-move-galaxy-1 45s linear forwards; }
+.m5-galaxy-dir-2 { animation: m5-move-galaxy-2 45s linear forwards; }
+.m5-galaxy-dir-3 { animation: m5-move-galaxy-3 45s linear forwards; }
+
+@keyframes m5-move-galaxy-0 {
+  0% { transform: translate(110vw, -10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; } 90% { opacity: 0.6; }
+  100% { transform: translate(-20vw, 110vh) rotate(360deg); opacity: 0; }
+}
+@keyframes m5-move-galaxy-1 {
+  0% { transform: translate(-20vw, -10vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; } 90% { opacity: 0.6; }
+  100% { transform: translate(110vw, 110vh) rotate(360deg); opacity: 0; }
+}
+@keyframes m5-move-galaxy-2 {
+  0% { transform: translate(110vw, 30vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; } 90% { opacity: 0.6; }
+  100% { transform: translate(-20vw, 50vh) rotate(360deg); opacity: 0; }
+}
+@keyframes m5-move-galaxy-3 {
+  0% { transform: translate(-20vw, 40vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; } 90% { opacity: 0.6; }
+  100% { transform: translate(110vw, 60vh) rotate(360deg); opacity: 0; }
 }
 
 .m5-question, .m5-answer {

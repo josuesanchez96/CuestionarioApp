@@ -102,6 +102,10 @@
                 <clipPath id="circleMask">
                   <circle cx="140" cy="140" r={radius - 6} />
                 </clipPath>
+                <linearGradient id="m3-waterGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#10b981" />
+                  <stop offset="100%" stopColor="#34d399" />
+                </linearGradient>
               </defs>
               {/* Background circle */}
               <circle
@@ -123,14 +127,14 @@
                 >
                   {/* Back wave */}
                   <path
-                    className={`clock-water-wave clock-water-wave-2 ${isPM ? 'pm-color' : ''}`}
-                    style={{ opacity: lightMode >= 2 ? 0.35 : 0.25, transition: 'opacity 0.2s', fill: lightMode >= 2 ? '#ffffff' : '' }}
+                    className="clock-water-wave clock-water-wave-2"
+                    style={{ opacity: lightMode >= 2 ? 0.35 : 0.3, transition: 'opacity 0.2s' }}
                     d="M 0 0 Q 70 12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
                   />
                   {/* Front wave */}
                   <path
-                    className={`clock-water-wave ${isPM ? 'pm-color' : ''}`}
-                    style={{ opacity: lightMode >= 2 ? 0.5 : 0.25, transition: 'opacity 0.2s', fill: lightMode >= 2 ? '#ffffff' : '' }}
+                    className="clock-water-wave"
+                    style={{ opacity: lightMode >= 2 ? 0.55 : 0.5, transition: 'opacity 0.2s' }}
                     d="M 0 0 Q 70 -12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
                   />
                 </g>
@@ -226,6 +230,12 @@
         const touchStartX = useRef(null);
         const touchEndX = useRef(null);
         const [m5Ripple, setM5Ripple] = useState(false);
+        const [cometDir, setCometDir] = useState(null);
+        const [galaxyDir, setGalaxyDir] = useState(null);
+        const [saturnDir, setSaturnDir] = useState(null);
+        const [moonDir, setMoonDir] = useState(null);
+        const [jupiterDir, setJupiterDir] = useState(null);
+        const [marsDir, setMarsDir] = useState(null);
 
         const totalQuestions = questions.length;
 
@@ -398,6 +408,206 @@
             setRevealed(false);
           }
         }, [currentIndex, gameMode]);
+
+        // --- Comet Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setCometDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleComet = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              // Dirección aleatoria (0 a 3)
+              const randomDir = Math.floor(Math.random() * 4);
+              setCometDir(randomDir);
+              
+              // La animación dura 15s en CSS, reiniciamos el estado después de 16s
+              resetTimeoutId = setTimeout(() => {
+                setCometDir(null);
+                scheduleComet();
+              }, 16000);
+            }, delay);
+          };
+
+          scheduleComet();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Galaxy Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setGalaxyDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleGalaxy = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              const randomDir = Math.floor(Math.random() * 4);
+              setGalaxyDir(randomDir);
+              // La animación dura 45s en CSS, reiniciamos el estado después de 46s
+              resetTimeoutId = setTimeout(() => {
+                setGalaxyDir(null);
+                scheduleGalaxy();
+              }, 46000);
+            }, delay);
+          };
+
+          scheduleGalaxy();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Saturn Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setSaturnDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleSaturn = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              const randomDir = Math.floor(Math.random() * 4);
+              setSaturnDir(randomDir);
+              // La animación dura 15s en CSS, reiniciamos el estado después de 16s
+              resetTimeoutId = setTimeout(() => {
+                setSaturnDir(null);
+                scheduleSaturn();
+              }, 16000);
+            }, delay);
+          };
+
+          scheduleSaturn();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Moon Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setMoonDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleMoon = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              const randomDir = Math.floor(Math.random() * 4);
+              setMoonDir(randomDir);
+              // La animación dura 20s en CSS, reiniciamos el estado después de 21s
+              resetTimeoutId = setTimeout(() => {
+                setMoonDir(null);
+                scheduleMoon();
+              }, 21000);
+            }, delay);
+          };
+
+          scheduleMoon();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Jupiter Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setJupiterDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleJupiter = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              const randomDir = Math.floor(Math.random() * 4);
+              setJupiterDir(randomDir);
+              // La animación dura 25s
+              resetTimeoutId = setTimeout(() => {
+                setJupiterDir(null);
+                scheduleJupiter();
+              }, 26000);
+            }, delay);
+          };
+
+          scheduleJupiter();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Mars Timer for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) {
+            setMarsDir(null);
+            return;
+          }
+
+          let timeoutId;
+          let resetTimeoutId;
+
+          const scheduleMars = () => {
+            // Entre 3 y 9 minutos
+            const delay = Math.floor(Math.random() * (540000 - 180000 + 1)) + 180000;
+
+            timeoutId = setTimeout(() => {
+              const randomDir = Math.floor(Math.random() * 4);
+              setMarsDir(randomDir);
+              // La animación dura 18s
+              resetTimeoutId = setTimeout(() => {
+                setMarsDir(null);
+                scheduleMars();
+              }, 19000);
+            }, delay);
+          };
+
+          scheduleMars();
+
+          return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+            if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
 
         // --- Core Effects ---
 
@@ -638,8 +848,9 @@
         }
 
         function startModule(mode, forceReset = false) {
-          const isStudyModule = mode === 'module3' || mode === 'module4';
-          const wasStudyModule = prevMode === 'module3' || prevMode === 'module4';
+          const studyModules = ['module3', 'module4', 'module5'];
+          const isStudyModule = studyModules.includes(mode);
+          const wasStudyModule = studyModules.includes(prevMode);
           const shouldContinue = !forceReset && isStudyModule && wasStudyModule && questions.length > 0 && !gameOver;
 
           if (!shouldContinue) {
@@ -869,7 +1080,7 @@
                     </div>
                   </div>
                   <div className={`m3-actions ${lightMode >= 2 ? 'm3-aurora-mode' : ''}`}>
-                    <div className="m3-progress-fill" style={{ width: `${progressPercent}%` }} />
+                    <div className={`m3-progress-fill ${new Date().getHours() >= 12 ? 'pm-color' : ''}`} style={{ width: `${progressPercent}%` }} />
                     <button
                       className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`}
                       onClick={(e) => {
@@ -971,6 +1182,12 @@
               {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
                 <main 
                   className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  onClick={() => {
+                    setRevealed(!revealed);
+                  }}
                   onDoubleClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
                 >
                   <div className="m5-stars-container">
@@ -991,58 +1208,14 @@
                     </button>
                   </div>
 
-                  <div className="m5-center-circle-container" onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setM5Ripple(false);
-                    setTimeout(() => setM5Ripple(true), 10);
-                    if (!revealed) {
-                      setRevealed(true);
-                    } else {
-                      goToNextQuestion();
-                    }
-                  }}>
-                    <svg 
-                      className="m5-progress-circle-large" 
-                      width="80" height="80" viewBox="0 0 80 80" 
-                    >
-                      <defs>
-                        <clipPath id="m5-flameMask">
-                          <circle cx="40" cy="40" r="34" />
-                        </clipPath>
-                        <radialGradient id="m5-glowGrad" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                          <stop offset="0%" stopColor="white" stopOpacity="0.9" />
-                          <stop offset="40%" stopColor="#fef08a" stopOpacity="0.4" />
-                          <stop offset="100%" stopColor="#ea580c" stopOpacity="0" />
-                        </radialGradient>
-                      </defs>
-                      <circle className="m5-circle-bg" cx="40" cy="40" r="34" />
-                      
-                      <g className="m5-glow-wrapper">
-                        {/* Main soft background glow */}
-                        <circle cx="40" cy="40" r="36" fill="url(#m5-glowGrad)" className={revealed ? "m5-glow-pulse-fast" : "m5-glow-pulse"} />
-                        
-                        {/* Inner glowing core - made larger */}
-                        <circle cx="40" cy="40" r="18" fill="white" className={revealed ? "m5-core-pulse-fast" : "m5-core-pulse"} />
-                      </g>
+                  <div className={`m5-comet ${cometDir !== null ? `m5-comet-dir-${cometDir}` : ''}`} />
+                  <div className={`m5-galaxy ${galaxyDir !== null ? `m5-galaxy-dir-${galaxyDir}` : ''}`} />
+                  <div className={`m5-saturn ${saturnDir !== null ? `m5-saturn-dir-${saturnDir}` : ''}`} />
+                  <div className={`m5-moon ${moonDir !== null ? `m5-moon-dir-${moonDir}` : ''}`} />
+                  <div className={`m5-jupiter ${jupiterDir !== null ? `m5-jupiter-dir-${jupiterDir}` : ''}`} />
+                  <div className={`m5-mars ${marsDir !== null ? `m5-mars-dir-${marsDir}` : ''}`} />
 
-                      {m5Ripple && (
-                        <circle 
-                          className="m5-ripple" 
-                          cx="40" cy="40" r="34" 
-                          fill="none" 
-                          stroke="rgba(255, 255, 255, 0.6)" 
-                          strokeWidth="2" 
-                        />
-                      )}
 
-                      <circle 
-                        className={`m5-circle-fill-large ${revealed ? 'm5-circle-answer' : 'm5-circle-question'}`} 
-                        cx="40" cy="40" r="34" 
-                        strokeDasharray="213.6"
-                        strokeDashoffset={0}
-                      />
-                    </svg>
-                  </div>
 
                   <div className="m5-content">
                     {!revealed ? (
