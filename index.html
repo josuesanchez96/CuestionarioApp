@@ -47,7 +47,7 @@
     if (!window.React || !window.ReactDOM || !window.XLSX) {
       // Si faltan librerías, dejamos el mensaje de diagnóstico.
     } else {
-      const { useState, useEffect, useMemo, useRef } = React;
+      const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
       function shuffleArray(array) {
         const arr = [...array];
@@ -229,6 +229,7 @@
         const fireworksIntervalRef = useRef(null);
         const touchStartX = useRef(null);
         const touchEndX = useRef(null);
+        const module5Ref = useRef(null);
         const [m5Ripple, setM5Ripple] = useState(false);
         const [cometDir, setCometDir] = useState(null);
         const [galaxyDir, setGalaxyDir] = useState(null);
@@ -406,6 +407,7 @@
         useEffect(() => {
           if (gameMode === 'module5') {
             setRevealed(false);
+            if (module5Ref.current) module5Ref.current.focus();
           }
         }, [currentIndex, gameMode]);
 
@@ -607,6 +609,51 @@
             if (timeoutId) clearTimeout(timeoutId);
             if (resetTimeoutId) clearTimeout(resetTimeoutId);
           };
+        }, [gameMode, gameStarted, gameOver]);
+        
+        // --- Keyboard Controls for Module 5 (Robust Ref-based) ---
+        const m5StateRef = useRef({ revealed, currentIndex });
+        useEffect(() => {
+          m5StateRef.current = { revealed, currentIndex };
+        }, [revealed, currentIndex]);
+
+        useEffect(() => {
+          if (gameMode !== 'module5' || !gameStarted || gameOver) return;
+
+          const handleKeyDown = (e) => {
+            const { revealed: isRevealed, currentIndex: idx } = m5StateRef.current;
+            
+            switch (e.key) {
+              case ' ':
+              case 'Enter':
+                if (e.target.tagName !== 'BUTTON') {
+                  e.preventDefault();
+                  setRevealed(!isRevealed);
+                }
+                break;
+              case 'ArrowRight':
+                e.preventDefault();
+                setRevealed(false);
+                goToNextQuestion();
+                break;
+              case 'ArrowLeft':
+                e.preventDefault();
+                if (idx > 0) {
+                  setRevealed(false);
+                  setCurrentIndex(idx - 1);
+                }
+                break;
+              case 'Escape':
+                e.preventDefault();
+                handleChangeModule();
+                break;
+              default:
+                break;
+            }
+          };
+
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
         }, [gameMode, gameStarted, gameOver]);
 
         // --- Core Effects ---
@@ -1181,6 +1228,9 @@
 
               {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
                 <main 
+                  ref={module5Ref}
+                  tabIndex={0}
+                  autoFocus
                   className={`module5-area ${revealed ? 'm5-revealed-bg' : ''}`}
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
