@@ -644,10 +644,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 100%;
-  position: relative;
-  padding-bottom: 20px;
-  min-height: calc(100vh - 60px); /* Adjust to give more room for vertical pushing */
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 20px;
+  z-index: 10;
 }
 
 .m3-animated-bg {
@@ -1266,9 +1267,11 @@ body {
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
-  width: 100%;
-  min-height: calc(100vh - 60px);
-  padding: 0 0 30px;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  padding: 20px 20px 40px 20px;
+  z-index: 10;
   box-sizing: border-box;
 }
 
