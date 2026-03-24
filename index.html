@@ -365,42 +365,7 @@
             : null;
 
         // --- Screen Wake Lock for Module 4 ---
-        useEffect(() => {
-          let wakeLock = null;
 
-          const requestWakeLock = async () => {
-            try {
-              if ('wakeLock' in navigator) {
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock is active');
-              }
-            } catch (err) {
-              console.error(`${err.name}, ${err.message}`);
-            }
-          };
-
-          if (gameMode === 'module4' && gameStarted && !gameOver) {
-            requestWakeLock();
-          }
-
-          const handleVisibilityChange = async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-              await requestWakeLock();
-            }
-          };
-
-          document.addEventListener('visibilitychange', handleVisibilityChange);
-
-          return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            if (wakeLock !== null) {
-              wakeLock.release().then(() => {
-                wakeLock = null;
-                console.log('Wake Lock released');
-              });
-            }
-          };
-        }, [gameMode, gameStarted, gameOver]);
 
 
         // Reset when changing question manually or mode
@@ -611,7 +576,7 @@
           };
         }, [gameMode, gameStarted, gameOver]);
         
-        // --- Screen Wake Lock ---
+        // --- Screen Wake Lock (Module 4 & 5) ---
         useEffect(() => {
           let wakeLock = null;
 
@@ -619,6 +584,7 @@
             if ('wakeLock' in navigator && document.visibilityState === 'visible') {
               try {
                 wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Screen Wake Lock is active (Always On mode enabled)');
               } catch (err) {
                 console.warn('Wake Lock request failed:', err);
               }
@@ -627,18 +593,22 @@
 
           const releaseWakeLock = () => {
             if (wakeLock) {
-              wakeLock.release().catch(() => {});
-              wakeLock = null;
+              wakeLock.release().then(() => {
+                console.log('Screen Wake Lock released');
+                wakeLock = null;
+              }).catch(() => {});
             }
           };
 
           const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && gameStarted && !gameOver && gameMode === 'module4') {
+            const isTargetMode = gameMode === 'module4' || gameMode === 'module5';
+            if (document.visibilityState === 'visible' && gameStarted && !gameOver && isTargetMode) {
               requestWakeLock();
             }
           };
 
-          if (gameStarted && !gameOver && gameMode === 'module4') {
+          const isTargetMode = gameMode === 'module4' || gameMode === 'module5';
+          if (gameStarted && !gameOver && isTargetMode) {
             requestWakeLock();
             document.addEventListener('visibilitychange', handleVisibilityChange);
           } else {
