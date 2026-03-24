@@ -712,16 +712,16 @@ body {
 }
 
 .clock-water-wave {
-  fill: #10b981; 
-  opacity: 0.5; /* Mayor opacidad para que se vea como la barra de progreso */
+  fill: #82c8e5; 
+  opacity: 1; /* Sin opacidad (solidez 100%) a petición */
   animation: waveAction 4s linear infinite;
 }
 
 
 
 .clock-water-wave-2 {
-  fill: #34d399; /* lighter green to distinguish the back wave */
-  opacity: 0.3; /* Aumentado de 0.25 */
+  fill: #82c8e5; /* agua azul */
+  opacity: 0.5; /* Aumentado para armonizar mejor */
   animation: waveAction2 6s linear infinite;
 }
 
