@@ -627,6 +627,11 @@ body {
   color: #f9fafb !important;
 }
 
+/* Hide distracting animated orbs in dark mode/modules 3 and 4 */
+.dark-theme .floating-orb {
+  display: none !important;
+}
+
 .dark-theme .background-gradient {
   background: transparent !important;
 }
@@ -707,15 +712,15 @@ body {
 }
 
 .clock-water-wave {
-  fill: url(#m3-waterGrad); 
+  fill: #10b981; 
   opacity: 0.5; /* Mayor opacidad para que se vea como la barra de progreso */
-  transition: fill 0.5s ease;
   animation: waveAction 4s linear infinite;
 }
 
 
 
 .clock-water-wave-2 {
+  fill: #34d399; /* lighter green to distinguish the back wave */
   opacity: 0.3; /* Aumentado de 0.25 */
   animation: waveAction2 6s linear infinite;
 }
