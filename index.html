@@ -617,17 +617,18 @@
           };
         }, [gameStarted, gameOver, gameMode]);
         
-        // --- Keyboard Controls for Module 5 (Robust Ref-based) ---
-        const m5StateRef = useRef({ revealed, currentIndex });
+        // --- Keyboard Controls for Module 3 & 5 (Robust Ref-based) ---
+        const navStateRef = useRef({ revealed, currentIndex });
         useEffect(() => {
-          m5StateRef.current = { revealed, currentIndex };
+          navStateRef.current = { revealed, currentIndex };
         }, [revealed, currentIndex]);
 
         useEffect(() => {
-          if (gameMode !== 'module5' || !gameStarted || gameOver) return;
+          const isNavModule = (gameMode === 'module3' || gameMode === 'module5');
+          if (!isNavModule || !gameStarted || gameOver) return;
 
           const handleKeyDown = (e) => {
-            const { revealed: isRevealed, currentIndex: idx } = m5StateRef.current;
+            const { revealed: isRevealed, currentIndex: idx } = navStateRef.current;
             
             switch (e.key) {
               case ' ':
