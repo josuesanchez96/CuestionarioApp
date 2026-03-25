@@ -712,7 +712,7 @@ body {
 }
 
 .clock-water-wave {
-  fill: #22d3ee; 
+  fill: #0891b2; 
   opacity: 1; /* Sin opacidad (solidez 100%) a petición */
   animation: waveAction 4s linear infinite;
 }
@@ -720,7 +720,7 @@ body {
 
 
 .clock-water-wave-2 {
-  fill: #22d3ee; /* agua cian */
+  fill: #0891b2; /* agua cian */
   opacity: 0.5; /* Aumentado para armonizar mejor */
   animation: waveAction2 6s linear infinite;
 }
