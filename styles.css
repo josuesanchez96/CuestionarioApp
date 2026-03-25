@@ -712,7 +712,7 @@ body {
 }
 
 .clock-water-wave {
-  fill: #82c8e5; 
+  fill: #22d3ee; 
   opacity: 1; /* Sin opacidad (solidez 100%) a petición */
   animation: waveAction 4s linear infinite;
 }
@@ -720,7 +720,7 @@ body {
 
 
 .clock-water-wave-2 {
-  fill: #82c8e5; /* agua azul */
+  fill: #22d3ee; /* agua cian */
   opacity: 0.5; /* Aumentado para armonizar mejor */
   animation: waveAction2 6s linear infinite;
 }
@@ -1726,6 +1726,8 @@ body {
   justify-content: center;
   cursor: default;
   -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 1000;
 }
 
 /* Animación del Cometa */
