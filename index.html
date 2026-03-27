@@ -1387,12 +1387,16 @@
                 >
                   <div className="m6-card">
                     <div className="m6-header">
-                      <div className="m6-avatar">Q</div>
-                      <div className="m6-user-info">
-                        <span className="m6-username">Cuestionario_App</span>
-                        <span className="m6-location">Módulo 6 • Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                      <div className="m6-user-info-group">
+                        <div className="m6-avatar">Q</div>
+                        <div className="m6-user-texts">
+                          <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                        </div>
                       </div>
-                      <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                      <div className="m6-header-actions">
+                        <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
+                        <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                      </div>
                     </div>
 
                     <div 
