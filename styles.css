@@ -2386,11 +2386,21 @@ body {
   transform: scale(0.98);
 }
 
-.m6-choice-btn.m6-secondary {
-  background: #efefef;
-  color: #262626;
+.m6-choice-btn.m6-success {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #10b981;
 }
 
+.m6-choice-btn.m6-success:active:not(:disabled) {
+  background: #d1fae5;
+}
+
+.m6-choice-btn.m6-secondary {
+  background: #f8f9fa;
+  color: #262626;
+  border-color: #dbdbdb;
+}
 .m6-choice-btn.m6-secondary:active {
   background: #dbdbdb;
   transform: scale(0.98);

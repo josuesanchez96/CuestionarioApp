@@ -958,7 +958,12 @@
           setRevealed(false);
         }
 
-        function startModule(mode, forceReset = false, includeKnown = false) {
+        function startModule(mode, forceReset = false, filterMode = 'all') {
+          // Compatibility with old boolean calls: false -> 'pending', true -> 'all'
+          let actualFilter = filterMode;
+          if (filterMode === false) actualFilter = 'pending';
+          if (filterMode === true) actualFilter = 'all';
+
           const studyModules = ['module3', 'module4', 'module5', 'module6'];
           const isStudyModule = studyModules.includes(mode);
           const wasStudyModule = studyModules.includes(prevMode);
@@ -966,10 +971,13 @@
 
           if (!shouldContinue) {
             let filteredRows = rawRows;
-            if (mode === 'module6' && !includeKnown) {
-              filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
-              // Fallback si todas se saben
-              if (filteredRows.length === 0) filteredRows = rawRows;
+            if (mode === 'module6') {
+              if (actualFilter === 'pending') {
+                filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
+                if (filteredRows.length === 0) filteredRows = rawRows;
+              } else if (actualFilter === 'knownOnly') {
+                filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
+              }
             }
             const shuffled = shuffleArray(filteredRows);
             setQuestions(shuffled);
@@ -1750,27 +1758,35 @@
                     <h3>Modo de Repaso</h3>
                     <p>¿Qué preguntas deseas incluir?</p>
                     <div className="m6-restart-options">
-                      <button 
-                        className="m6-choice-btn m6-primary" 
-                        onClick={() => startModule('module6', true, false)}
-                      >
-                        🎯 Solo pendientes 
-                        <small>({rawRows.length - likedQuestions.length} restantes)</small>
-                      </button>
-                      <button 
-                        className="m6-choice-btn m6-secondary" 
-                        onClick={() => startModule('module6', true, true)}
-                      >
-                        🔄 Repasar todo
-                        <small>({rawRows.length} preguntas)</small>
-                      </button>
-                      <button 
-                        className="m6-choice-btn m6-cancel" 
-                        onClick={() => setShowRestartChoice(false)}
-                      >
-                        Cancelar
-                      </button>
-                    </div>
+                              <button 
+                                className="m6-choice-btn m6-primary" 
+                                onClick={() => startModule('module6', true, 'pending')}
+                              >
+                                🎯 Solo pendientes 
+                                <small>({rawRows.length - likedQuestions.length} restantes)</small>
+                              </button>
+                              <button 
+                                className="m6-choice-btn m6-success" 
+                                onClick={() => startModule('module6', true, 'knownOnly')}
+                                disabled={likedQuestions.length === 0}
+                              >
+                                ❤️ Solo conocidas
+                                <small>({likedQuestions.length} preguntas)</small>
+                              </button>
+                              <button 
+                                className="m6-choice-btn m6-secondary" 
+                                onClick={() => startModule('module6', true, 'all')}
+                              >
+                                🔄 Repasar todo
+                                <small>({rawRows.length} preguntas)</small>
+                              </button>
+                              <button 
+                                className="m6-choice-btn m6-cancel" 
+                                onClick={() => setShowRestartChoice(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
                   </div>
                 </div>
               )}
