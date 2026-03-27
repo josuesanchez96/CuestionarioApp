@@ -1471,10 +1471,7 @@
                           <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
                         </div>
 
-                        <div className="m6-interaction-group">
-                          <span className="m6-icon m6-rocket-icon" onClick={(e) => { e.stopPropagation(); shuffleImage(currentIndex); }}>🚀</span>
-                          <span className="m6-counter">{rocketClicks[currentQuestion.question + currentQuestion.answer] || 0}</span>
-                        </div>
+
 
                         <div className="m6-interaction-group">
                           <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
