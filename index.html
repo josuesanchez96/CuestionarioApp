@@ -1533,37 +1533,6 @@
                           {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
                         </button>
                       </div>
-
-                      {showRestartChoice && (
-                        <div className="m6-restart-overlay m6-fade-in">
-                          <div className="m6-restart-modal">
-                            <h3>Modo de Repaso</h3>
-                            <p>¿Qué preguntas deseas incluir?</p>
-                            <div className="m6-restart-options">
-                              <button 
-                                className="m6-choice-btn m6-primary" 
-                                onClick={() => startModule('module6', true, false)}
-                              >
-                                🎯 Solo pendientes 
-                                <small>({rawRows.length - likedQuestions.length} restantes)</small>
-                              </button>
-                              <button 
-                                className="m6-choice-btn m6-secondary" 
-                                onClick={() => startModule('module6', true, true)}
-                              >
-                                🔄 Repasar todo
-                                <small>({rawRows.length} preguntas)</small>
-                              </button>
-                              <button 
-                                className="m6-choice-btn m6-cancel" 
-                                onClick={() => setShowRestartChoice(false)}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </main>
@@ -1742,7 +1711,7 @@
                   )}
                   <div className="results-actions">
                     <button className="restart-button" onClick={handleRestart}>
-                      🔁 Repetir ronda
+                      🔁 {gameMode === 'module6' ? 'Modo de repaso' : 'Repetir ronda'}
                     </button>
                     <button className="change-module-btn" onClick={handleChangeModule}>
                       🔀 Cambiar módulo
@@ -1772,6 +1741,37 @@
                   Carga tu Excel y convierte el estudio en un juego interactivo.
                 </span>
               </footer>
+
+              {showRestartChoice && (
+                <div className="m6-restart-overlay m6-fade-in">
+                  <div className="m6-restart-modal">
+                    <h3>Modo de Repaso</h3>
+                    <p>¿Qué preguntas deseas incluir?</p>
+                    <div className="m6-restart-options">
+                      <button 
+                        className="m6-choice-btn m6-primary" 
+                        onClick={() => startModule('module6', true, false)}
+                      >
+                        🎯 Solo pendientes 
+                        <small>({rawRows.length - likedQuestions.length} restantes)</small>
+                      </button>
+                      <button 
+                        className="m6-choice-btn m6-secondary" 
+                        onClick={() => startModule('module6', true, true)}
+                      >
+                        🔄 Repasar todo
+                        <small>({rawRows.length} preguntas)</small>
+                      </button>
+                      <button 
+                        className="m6-choice-btn m6-cancel" 
+                        onClick={() => setShowRestartChoice(false)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );
