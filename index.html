@@ -233,9 +233,9 @@
         const [moonDir, setMoonDir] = useState(null);
         const [jupiterDir, setJupiterDir] = useState(null);
         const [marsDir, setMarsDir] = useState(null);
-        const [likedQuestions, setLikedQuestions] = useState(() => {
-          const saved = localStorage.getItem('cuestionario_likedQuestions');
-          return saved ? JSON.parse(saved) : [];
+        const [likeCounts, setLikeCounts] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_likeCounts');
+          return saved ? JSON.parse(saved) : {};
         });
         const [savedQuestions, setSavedQuestions] = useState(() => {
           const saved = localStorage.getItem('cuestionario_savedQuestions');
@@ -249,6 +249,10 @@
         const [currentComment, setCurrentComment] = useState("");
         const [imageSeeds, setImageSeeds] = useState(() => {
           const saved = localStorage.getItem('cuestionario_imageSeeds');
+          return saved ? JSON.parse(saved) : {};
+        });
+        const [rocketClicks, setRocketClicks] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_rocketClicks');
           return saved ? JSON.parse(saved) : {};
         });
         const [showBigHeart, setShowBigHeart] = useState(false);
@@ -272,10 +276,11 @@
         }, [gameMode]);
         useEffect(() => { localStorage.setItem('cuestionario_lightMode', lightMode); }, [lightMode]);
         useEffect(() => { localStorage.setItem('cuestionario_textVisibility', textVisibility); }, [textVisibility]);
-        useEffect(() => { localStorage.setItem('cuestionario_likedQuestions', JSON.stringify(likedQuestions)); }, [likedQuestions]);
+        useEffect(() => { localStorage.setItem('cuestionario_likeCounts', JSON.stringify(likeCounts)); }, [likeCounts]);
         useEffect(() => { localStorage.setItem('cuestionario_savedQuestions', JSON.stringify(savedQuestions)); }, [savedQuestions]);
         useEffect(() => { localStorage.setItem('cuestionario_comments', JSON.stringify(comments)); }, [comments]);
         useEffect(() => { localStorage.setItem('cuestionario_imageSeeds', JSON.stringify(imageSeeds)); }, [imageSeeds]);
+        useEffect(() => { localStorage.setItem('cuestionario_rocketClicks', JSON.stringify(rocketClicks)); }, [rocketClicks]);
         useEffect(() => {
           if (prevMode) localStorage.setItem('cuestionario_prevMode', prevMode);
           else localStorage.removeItem('cuestionario_prevMode');
@@ -729,10 +734,11 @@
             setWrongCount(0);
             setDisabledOptions([]);
             setFailedQuestions([]);
-            setLikedQuestions([]);
+            setLikeCounts({});
             setSavedQuestions([]);
             setComments({});
             setImageSeeds({});
+            setRocketClicks({});
             setRevealed(false);
             setLoadingFile(false);
           }
@@ -780,10 +786,11 @@
               setCorrectCount(0);
               setWrongCount(0);
               setFailedQuestions([]);
-              setLikedQuestions([]);
+              setLikeCounts({});
               setSavedQuestions([]);
               setComments({});
               setImageSeeds({});
+              setRocketClicks({});
               setGameStarted(false);
               setGameOver(false);
               setGameMode(null);
@@ -988,11 +995,12 @@
           goToNextQuestion();
         }
 
-        const toggleLike = (question) => {
+        const incrementLike = (question) => {
           const key = question.question + question.answer;
-          setLikedQuestions(prev => 
-            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-          );
+          setLikeCounts(prev => ({
+            ...prev,
+            [key]: (prev[key] || 0) + 1
+          }));
         };
 
         const toggleSave = (question) => {
@@ -1015,6 +1023,12 @@
           setImageSeeds(prev => ({
             ...prev,
             [index]: Math.floor(Math.random() * 1000000)
+          }));
+          const question = questions[index];
+          const key = question.question + question.answer;
+          setRocketClicks(prev => ({
+            ...prev,
+            [key]: (prev[key] || 0) + 1
           }));
         };
 
@@ -1384,7 +1398,6 @@
                     <div 
                       className="m6-image-container" 
                       onClick={() => setRevealed(!revealed)}
-                      onDoubleClick={() => handleDoubleTap(currentQuestion)}
                     >
                       <img 
                         src={`https://picsum.photos/1080/1350?random=${imageSeeds[currentIndex] || currentIndex}`} 
@@ -1396,25 +1409,38 @@
                       {showBigHeart && (
                         <div className="m6-heart-animation">❤️</div>
                       )}
-                      {!revealed && (
-                        <div className="m6-image-overlay-bottom">
-                          <span className="m6-tap-hint-small">Toca para respuesta</span>
+                      
+                      <div className={`m6-image-answer-overlay ${revealed ? 'm6-visible' : ''}`}>
+                        <div className="m6-overlay-answer-box">
+                          {currentQuestion.answer}
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     <div className="m6-content-section">
                       <div className="m6-interactions">
-                        <span 
-                          className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); toggleLike(currentQuestion); }}
-                        >
-                          {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
-                        </span>
-                        <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
-                          {showComments ? '💬' : '🗨️'}
-                        </span>
-                        <span className="m6-icon m6-rocket-icon" onClick={(e) => { e.stopPropagation(); shuffleImage(currentIndex); }}>🚀</span>
+                        <div className="m6-interaction-group">
+                          <span 
+                            className={`m6-icon ${(likeCounts[currentQuestion.question + currentQuestion.answer] || 0) > 0 ? 'm6-liked' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); incrementLike(currentQuestion); }}
+                          >
+                            {(likeCounts[currentQuestion.question + currentQuestion.answer] || 0) > 0 ? '❤️' : '🤍'}
+                          </span>
+                          <span className="m6-counter">{likeCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
+                        </div>
+
+                        <div className="m6-interaction-group">
+                          <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
+                            {showComments ? '💬' : '🗨️'}
+                          </span>
+                          <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
+                        </div>
+
+                        <div className="m6-interaction-group">
+                          <span className="m6-icon m6-rocket-icon" onClick={(e) => { e.stopPropagation(); shuffleImage(currentIndex); }}>🚀</span>
+                          <span className="m6-counter">{rocketClicks[currentQuestion.question + currentQuestion.answer] || 0}</span>
+                        </div>
+
                         <span 
                           className={`m6-icon m6-icon-save ${savedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-saved' : ''}`}
                           onClick={(e) => { e.stopPropagation(); toggleSave(currentQuestion); }}
@@ -1428,14 +1454,6 @@
                           <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
                         </p>
                         
-                        {revealed && (
-                          <div className="m6-answer-section m6-fade-in">
-                            <p className="m6-answer-text">
-                              <span className="m6-username-inline">Respuesta:</span> {currentQuestion.answer}
-                            </p>
-                          </div>
-                        )}
-
                         {showComments && (
                           <div className="m6-comments-container m6-fade-in">
                             <div className="m6-comments-list">
