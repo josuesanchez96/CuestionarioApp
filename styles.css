@@ -1967,6 +1967,8 @@ body {
   overflow: hidden;
   cursor: pointer;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 .m6-main-image {
@@ -1987,6 +1989,7 @@ body {
   animation: m6HeartPop 0.8s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;
   pointer-events: none;
   z-index: 10;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes m6HeartPop {
@@ -2065,6 +2068,8 @@ body {
   cursor: pointer;
   transition: transform 0.2s;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 .m6-icon:active {
@@ -2206,6 +2211,8 @@ body {
   font-size: 14px;
   cursor: pointer;
   transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 .m6-nav-btn:hover:not(:disabled) {
