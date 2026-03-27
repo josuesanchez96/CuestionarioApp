@@ -255,6 +255,10 @@
           const saved = localStorage.getItem('cuestionario_rocketClicks');
           return saved ? JSON.parse(saved) : {};
         });
+        const [viewCounts, setViewCounts] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_viewCounts');
+          return saved ? JSON.parse(saved) : {};
+        });
         const [showBigHeart, setShowBigHeart] = useState(false);
 
         const totalQuestions = questions.length;
@@ -281,6 +285,7 @@
         useEffect(() => { localStorage.setItem('cuestionario_comments', JSON.stringify(comments)); }, [comments]);
         useEffect(() => { localStorage.setItem('cuestionario_imageSeeds', JSON.stringify(imageSeeds)); }, [imageSeeds]);
         useEffect(() => { localStorage.setItem('cuestionario_rocketClicks', JSON.stringify(rocketClicks)); }, [rocketClicks]);
+        useEffect(() => { localStorage.setItem('cuestionario_viewCounts', JSON.stringify(viewCounts)); }, [viewCounts]);
         useEffect(() => {
           if (prevMode) localStorage.setItem('cuestionario_prevMode', prevMode);
           else localStorage.removeItem('cuestionario_prevMode');
@@ -739,6 +744,7 @@
             setComments({});
             setImageSeeds({});
             setRocketClicks({});
+            setViewCounts({});
             setRevealed(false);
             setLoadingFile(false);
           }
@@ -788,10 +794,11 @@
               setFailedQuestions([]);
               setLikeCounts({});
               setSavedQuestions([]);
-              setComments({});
-              setImageSeeds({});
-              setRocketClicks({});
-              setGameStarted(false);
+               setComments({});
+               setImageSeeds({});
+               setRocketClicks({});
+               setViewCounts({});
+               setGameStarted(false);
               setGameOver(false);
               setGameMode(null);
               setSelectedOption(null);
@@ -1399,10 +1406,19 @@
                       </div>
                     </div>
 
-                    <div 
-                      className="m6-image-container" 
-                      onClick={() => setRevealed(!revealed)}
-                    >
+                     <div 
+                        className="m6-image-container" 
+                        onClick={() => {
+                          if (!revealed) {
+                            const key = currentQuestion.question + currentQuestion.answer;
+                            setViewCounts(prev => ({
+                              ...prev,
+                              [key]: (prev[key] || 0) + 1
+                            }));
+                          }
+                          setRevealed(!revealed);
+                        }}
+                      >
                       <img 
                         src={`https://picsum.photos/1080/1350?random=${imageSeeds[currentIndex] || currentIndex}`} 
                         alt="Instagram style" 
@@ -1443,6 +1459,11 @@
                         <div className="m6-interaction-group">
                           <span className="m6-icon m6-rocket-icon" onClick={(e) => { e.stopPropagation(); shuffleImage(currentIndex); }}>🚀</span>
                           <span className="m6-counter">{rocketClicks[currentQuestion.question + currentQuestion.answer] || 0}</span>
+                        </div>
+
+                        <div className="m6-interaction-group">
+                          <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
+                          <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
                         </div>
 
                         <span 
