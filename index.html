@@ -1402,7 +1402,7 @@
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                 >
-                  <div className="m6-card">
+                  <div className="m6-card" key={currentIndex}>
                     <div className="m6-header">
                       <div className="m6-user-info-group">
                         <div className="m6-avatar">Q</div>
@@ -1475,13 +1475,6 @@
                           <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
                           <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
                         </div>
-
-                        <span 
-                          className={`m6-icon m6-icon-save ${savedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-saved' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); toggleSave(currentQuestion); }}
-                        >
-                          {savedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '🔖' : '🏷️'}
-                        </span>
                       </div>
                       
                       <div className="m6-text-content">
