@@ -1966,6 +1966,7 @@ body {
   background-color: #efefef;
   overflow: hidden;
   cursor: pointer;
+  user-select: none;
 }
 
 .m6-main-image {
@@ -1975,24 +1976,46 @@ body {
   display: block;
 }
 
-.m6-image-overlay {
+.m6-heart-animation {
   position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 80px;
+  color: white;
+  text-shadow: 0 0 20px rgba(0,0,0,0.3);
+  animation: m6HeartPop 0.8s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards;
   pointer-events: none;
+  z-index: 10;
 }
 
-.m6-tap-hint {
+@keyframes m6HeartPop {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  30% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+  50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  80% { transform: translate(-50%, -50%) scale(1.1); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+.m6-image-overlay-bottom {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.m6-tap-hint-small {
   color: white;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
   backdrop-filter: blur(4px);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .m6-content-section {
@@ -2047,6 +2070,89 @@ body {
   line-height: 1.4;
   color: #262626;
   margin: 0;
+}
+
+/* ── Comentarios en Módulo 6 ── */
+.m6-comments-container {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #efefef;
+}
+
+.m6-comments-list {
+  max-height: 150px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.m6-comment {
+  font-size: 14px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  color: #262626;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+  padding-bottom: 6px;
+}
+
+.m6-comment-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.m6-comment-time {
+  font-size: 10px;
+  color: #8e8e8e;
+  font-weight: 400;
+}
+
+.m6-comment-text {
+  word-break: break-word;
+}
+
+.m6-no-comments {
+  font-size: 13px;
+  color: #8e8e8e;
+  font-style: italic;
+  margin: 0;
+}
+
+.m6-add-comment {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #efefef;
+  padding-top: 10px;
+}
+
+.m6-add-comment input {
+  flex: 1;
+  border: 1px solid #dbdbdb;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 14px;
+  outline: none;
+  background: white;
+}
+
+.m6-add-comment input:focus {
+  border-color: #0095f6;
+}
+
+.m6-add-comment button {
+  background: none;
+  border: none;
+  color: #0095f6;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.m6-add-comment button:disabled {
+  color: #b2dffc;
+  cursor: not-allowed;
 }
 
 .m6-footer {

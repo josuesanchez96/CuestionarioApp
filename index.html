@@ -233,6 +233,25 @@
         const [moonDir, setMoonDir] = useState(null);
         const [jupiterDir, setJupiterDir] = useState(null);
         const [marsDir, setMarsDir] = useState(null);
+        const [likedQuestions, setLikedQuestions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_likedQuestions');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [savedQuestions, setSavedQuestions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_savedQuestions');
+          return saved ? JSON.parse(saved) : [];
+        });
+        const [comments, setComments] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_comments');
+          return saved ? JSON.parse(saved) : {};
+        });
+        const [showComments, setShowComments] = useState(false);
+        const [currentComment, setCurrentComment] = useState("");
+        const [imageSeeds, setImageSeeds] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_imageSeeds');
+          return saved ? JSON.parse(saved) : {};
+        });
+        const [showBigHeart, setShowBigHeart] = useState(false);
 
         const totalQuestions = questions.length;
 
@@ -253,6 +272,10 @@
         }, [gameMode]);
         useEffect(() => { localStorage.setItem('cuestionario_lightMode', lightMode); }, [lightMode]);
         useEffect(() => { localStorage.setItem('cuestionario_textVisibility', textVisibility); }, [textVisibility]);
+        useEffect(() => { localStorage.setItem('cuestionario_likedQuestions', JSON.stringify(likedQuestions)); }, [likedQuestions]);
+        useEffect(() => { localStorage.setItem('cuestionario_savedQuestions', JSON.stringify(savedQuestions)); }, [savedQuestions]);
+        useEffect(() => { localStorage.setItem('cuestionario_comments', JSON.stringify(comments)); }, [comments]);
+        useEffect(() => { localStorage.setItem('cuestionario_imageSeeds', JSON.stringify(imageSeeds)); }, [imageSeeds]);
         useEffect(() => {
           if (prevMode) localStorage.setItem('cuestionario_prevMode', prevMode);
           else localStorage.removeItem('cuestionario_prevMode');
@@ -706,6 +729,10 @@
             setWrongCount(0);
             setDisabledOptions([]);
             setFailedQuestions([]);
+            setLikedQuestions([]);
+            setSavedQuestions([]);
+            setComments({});
+            setImageSeeds({});
             setRevealed(false);
             setLoadingFile(false);
           }
@@ -748,6 +775,15 @@
               }
 
               setRawRows(parsed);
+              setCurrentIndex(0);
+              setScore(0);
+              setCorrectCount(0);
+              setWrongCount(0);
+              setFailedQuestions([]);
+              setLikedQuestions([]);
+              setSavedQuestions([]);
+              setComments({});
+              setImageSeeds({});
               setGameStarted(false);
               setGameOver(false);
               setGameMode(null);
@@ -864,6 +900,8 @@
 
         function goToNextQuestion() {
           setRevealed(false);
+          setShowComments(false);
+          setCurrentComment("");
           setCurrentIndex((idx) => {
             if (idx + 1 >= questions.length) {
               setGameOver(true);
@@ -902,7 +940,7 @@
         }
 
         function startModule(mode, forceReset = false) {
-          const studyModules = ['module3', 'module4', 'module5'];
+          const studyModules = ['module3', 'module4', 'module5', 'module6'];
           const isStudyModule = studyModules.includes(mode);
           const wasStudyModule = studyModules.includes(prevMode);
           const shouldContinue = !forceReset && isStudyModule && wasStudyModule && questions.length > 0 && !gameOver;
@@ -949,6 +987,49 @@
           setRevealed(false);
           goToNextQuestion();
         }
+
+        const toggleLike = (question) => {
+          const key = question.question + question.answer;
+          setLikedQuestions(prev => 
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+          );
+        };
+
+        const toggleSave = (question) => {
+          const key = question.question + question.answer;
+          setSavedQuestions(prev => 
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+          );
+        };
+
+        const handleDoubleTap = (question) => {
+          const key = question.question + question.answer;
+          if (!likedQuestions.includes(key)) {
+            toggleLike(question);
+          }
+          setShowBigHeart(true);
+          setTimeout(() => setShowBigHeart(false), 800);
+        };
+
+        const shuffleImage = (index) => {
+          setImageSeeds(prev => ({
+            ...prev,
+            [index]: Math.floor(Math.random() * 1000000)
+          }));
+        };
+
+        const addComment = (question) => {
+          if (!currentComment.trim()) return;
+          const key = question.question + question.answer;
+          const now = new Date();
+          const timestamp = `${now.toLocaleDateString()} a las ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+          const newComment = { text: currentComment.trim(), time: timestamp };
+          setComments(prev => ({
+            ...prev,
+            [key]: [...(prev[key] || []), newComment]
+          }));
+          setCurrentComment("");
+        };
 
         const handleTouchStart = (e) => {
           touchStartX.current = e.targetTouches[0].clientX;
@@ -1300,26 +1381,46 @@
                       <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
                     </div>
 
-                    <div className="m6-image-container" onClick={() => setRevealed(!revealed)}>
+                    <div 
+                      className="m6-image-container" 
+                      onClick={() => setRevealed(!revealed)}
+                      onDoubleClick={() => handleDoubleTap(currentQuestion)}
+                    >
                       <img 
-                        src={`https://picsum.photos/1080/1350?random=${currentIndex}`} 
+                        src={`https://picsum.photos/1080/1350?random=${imageSeeds[currentIndex] || currentIndex}`} 
                         alt="Instagram style" 
                         className="m6-main-image"
+                        key={`img-${currentIndex}-${imageSeeds[currentIndex] || ''}`}
                         loading="lazy"
                       />
+                      {showBigHeart && (
+                        <div className="m6-heart-animation">❤️</div>
+                      )}
                       {!revealed && (
-                        <div className="m6-image-overlay">
-                          <span className="m6-tap-hint">Toca para ver la respuesta</span>
+                        <div className="m6-image-overlay-bottom">
+                          <span className="m6-tap-hint-small">Toca para respuesta</span>
                         </div>
                       )}
                     </div>
 
                     <div className="m6-content-section">
                       <div className="m6-interactions">
-                        <span className="m6-icon">❤️</span>
-                        <span className="m6-icon">💬</span>
-                        <span className="m6-icon">🚀</span>
-                        <span className="m6-icon m6-icon-save">🔖</span>
+                        <span 
+                          className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); toggleLike(currentQuestion); }}
+                        >
+                          {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
+                        </span>
+                        <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
+                          {showComments ? '💬' : '🗨️'}
+                        </span>
+                        <span className="m6-icon m6-rocket-icon" onClick={(e) => { e.stopPropagation(); shuffleImage(currentIndex); }}>🚀</span>
+                        <span 
+                          className={`m6-icon m6-icon-save ${savedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-saved' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); toggleSave(currentQuestion); }}
+                        >
+                          {savedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '🔖' : '🏷️'}
+                        </span>
                       </div>
                       
                       <div className="m6-text-content">
@@ -1332,6 +1433,40 @@
                             <p className="m6-answer-text">
                               <span className="m6-username-inline">Respuesta:</span> {currentQuestion.answer}
                             </p>
+                          </div>
+                        )}
+
+                        {showComments && (
+                          <div className="m6-comments-container m6-fade-in">
+                            <div className="m6-comments-list">
+                              {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
+                                <div key={i} className="m6-comment">
+                                  <div className="m6-comment-top">
+                                    <span className="m6-username-inline">Tú</span>
+                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : c.time}</span>
+                                  </div>
+                                  <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
+                                </div>
+                              ))}
+                              {!(comments[currentQuestion.question + currentQuestion.answer] || []).length && (
+                                <p className="m6-no-comments">No hay comentarios aún.</p>
+                              )}
+                            </div>
+                            <div className="m6-add-comment">
+                              <input 
+                                type="text" 
+                                placeholder="Añade un comentario..." 
+                                value={currentComment}
+                                onChange={(e) => setCurrentComment(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
+                              />
+                              <button 
+                                onClick={() => addComment(currentQuestion)}
+                                disabled={!currentComment.trim()}
+                              >
+                                Publicar
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
