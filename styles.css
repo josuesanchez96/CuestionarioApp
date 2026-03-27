@@ -2313,13 +2313,98 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Ajustes específicos para móviles */
+/* ── Overlay de Reinicio (Modo Repaso) ── */
+.m6-restart-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.m6-restart-modal {
+  width: 100%;
+  max-width: 320px;
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  text-align: center;
+  border: 1px solid #efefef;
+}
+
+.m6-restart-modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: #262626;
+}
+
+.m6-restart-modal p {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: #8e8e8e;
+}
+
+.m6-restart-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.m6-choice-btn {
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.m6-choice-btn small {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.m6-choice-btn.m6-primary {
+  background: #0095f6;
+  color: white;
+}
+
+.m6-choice-btn.m6-primary:active {
+  background: #1877f2;
+  transform: scale(0.98);
+}
+
+.m6-choice-btn.m6-secondary {
+  background: #efefef;
+  color: #262626;
+}
+
+.m6-choice-btn.m6-secondary:active {
+  background: #dbdbdb;
+  transform: scale(0.98);
+}
+
+.m6-choice-btn.m6-cancel {
+  background: transparent;
+  color: #ed4956;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
 @media (max-width: 480px) {
-  .m6-question-text, .m6-answer-text {
-    font-size: 14px;
-  }
-  
-  .m6-header {
-    padding: 8px 12px;
+  .m6-restart-modal {
+    padding: 20px;
   }
 }

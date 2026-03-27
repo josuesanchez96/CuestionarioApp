@@ -233,9 +233,9 @@
         const [moonDir, setMoonDir] = useState(null);
         const [jupiterDir, setJupiterDir] = useState(null);
         const [marsDir, setMarsDir] = useState(null);
-        const [likeCounts, setLikeCounts] = useState(() => {
-          const saved = localStorage.getItem('cuestionario_likeCounts');
-          return saved ? JSON.parse(saved) : {};
+        const [likedQuestions, setLikedQuestions] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_likedQuestions');
+          return saved ? JSON.parse(saved) : [];
         });
         const [savedQuestions, setSavedQuestions] = useState(() => {
           const saved = localStorage.getItem('cuestionario_savedQuestions');
@@ -259,6 +259,7 @@
           const saved = localStorage.getItem('cuestionario_viewCounts');
           return saved ? JSON.parse(saved) : {};
         });
+        const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
 
         const totalQuestions = questions.length;
@@ -280,7 +281,7 @@
         }, [gameMode]);
         useEffect(() => { localStorage.setItem('cuestionario_lightMode', lightMode); }, [lightMode]);
         useEffect(() => { localStorage.setItem('cuestionario_textVisibility', textVisibility); }, [textVisibility]);
-        useEffect(() => { localStorage.setItem('cuestionario_likeCounts', JSON.stringify(likeCounts)); }, [likeCounts]);
+        useEffect(() => { localStorage.setItem('cuestionario_likedQuestions', JSON.stringify(likedQuestions)); }, [likedQuestions]);
         useEffect(() => { localStorage.setItem('cuestionario_savedQuestions', JSON.stringify(savedQuestions)); }, [savedQuestions]);
         useEffect(() => { localStorage.setItem('cuestionario_comments', JSON.stringify(comments)); }, [comments]);
         useEffect(() => { localStorage.setItem('cuestionario_imageSeeds', JSON.stringify(imageSeeds)); }, [imageSeeds]);
@@ -739,7 +740,7 @@
             setWrongCount(0);
             setDisabledOptions([]);
             setFailedQuestions([]);
-            setLikeCounts({});
+            setLikedQuestions([]);
             setSavedQuestions([]);
             setComments({});
             setImageSeeds({});
@@ -792,7 +793,7 @@
               setCorrectCount(0);
               setWrongCount(0);
               setFailedQuestions([]);
-              setLikeCounts({});
+              setLikedQuestions([]);
               setSavedQuestions([]);
                setComments({});
                setImageSeeds({});
@@ -934,7 +935,11 @@
             setGameMode(null);
             return;
           }
-          startModule(gameMode, true);
+          if (gameMode === 'module6') {
+            setShowRestartChoice(true);
+          } else {
+            startModule(gameMode, true);
+          }
         }
 
         function handleReviewFailed() {
@@ -953,14 +958,20 @@
           setRevealed(false);
         }
 
-        function startModule(mode, forceReset = false) {
+        function startModule(mode, forceReset = false, includeKnown = false) {
           const studyModules = ['module3', 'module4', 'module5', 'module6'];
           const isStudyModule = studyModules.includes(mode);
           const wasStudyModule = studyModules.includes(prevMode);
           const shouldContinue = !forceReset && isStudyModule && wasStudyModule && questions.length > 0 && !gameOver;
 
           if (!shouldContinue) {
-            const shuffled = shuffleArray(rawRows);
+            let filteredRows = rawRows;
+            if (mode === 'module6' && !includeKnown) {
+              filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
+              // Fallback si todas se saben
+              if (filteredRows.length === 0) filteredRows = rawRows;
+            }
+            const shuffled = shuffleArray(filteredRows);
             setQuestions(shuffled);
             setCurrentIndex(0);
             setScore(0);
@@ -972,11 +983,11 @@
           setGameOver(false);
           setGameStarted(true);
           setGameMode(mode);
-          setPrevMode(mode); // Actualizar para la próxima transición
+          setPrevMode(mode); 
           setSelectedOption(null);
           setFeedback(null);
           setRevealed(false);
-          // Mantener estado de animación (lightMode y textVisibility) al reiniciar la ronda
+          setShowRestartChoice(false);
         }
 
         function handleChangeModule() {
@@ -1002,12 +1013,11 @@
           goToNextQuestion();
         }
 
-        const incrementLike = (question) => {
+        const toggleKnown = (question) => {
           const key = question.question + question.answer;
-          setLikeCounts(prev => ({
-            ...prev,
-            [key]: (prev[key] || 0) + 1
-          }));
+          setLikedQuestions(prev => 
+            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+          );
         };
 
         const toggleSave = (question) => {
@@ -1441,12 +1451,12 @@
                       <div className="m6-interactions">
                         <div className="m6-interaction-group">
                           <span 
-                            className={`m6-icon ${(likeCounts[currentQuestion.question + currentQuestion.answer] || 0) > 0 ? 'm6-liked' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); incrementLike(currentQuestion); }}
+                            className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
+                            title={likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? "Ya me la sé" : "Marcar como conocida"}
                           >
-                            {(likeCounts[currentQuestion.question + currentQuestion.answer] || 0) > 0 ? '❤️' : '🤍'}
+                            {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
                           </span>
-                          <span className="m6-counter">{likeCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
                         </div>
 
                         <div className="m6-interaction-group">
@@ -1512,6 +1522,9 @@
                             </div>
                           </div>
                         )}
+                        <p className="m6-add-comment-hint">
+                          {showComments ? "Toca el icono para ocultar comentarios" : "Toca el icono para ver comentarios"}
+                        </p>
                       </div>
 
                       <div className="m6-footer">
@@ -1529,6 +1542,37 @@
                           {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
                         </button>
                       </div>
+
+                      {showRestartChoice && (
+                        <div className="m6-restart-overlay m6-fade-in">
+                          <div className="m6-restart-modal">
+                            <h3>Modo de Repaso</h3>
+                            <p>¿Qué preguntas deseas incluir?</p>
+                            <div className="m6-restart-options">
+                              <button 
+                                className="m6-choice-btn m6-primary" 
+                                onClick={() => startModule('module6', true, false)}
+                              >
+                                🎯 Solo pendientes 
+                                <small>({rawRows.length - likedQuestions.length} restantes)</small>
+                              </button>
+                              <button 
+                                className="m6-choice-btn m6-secondary" 
+                                onClick={() => startModule('module6', true, true)}
+                              >
+                                🔄 Repasar todo
+                                <small>({rawRows.length} preguntas)</small>
+                              </button>
+                              <button 
+                                className="m6-choice-btn m6-cancel" 
+                                onClick={() => setShowRestartChoice(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </main>
