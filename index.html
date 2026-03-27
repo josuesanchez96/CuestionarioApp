@@ -1067,10 +1067,10 @@
                       <span className="hub-title">Módulo 4</span>
                       <span className="hub-desc">Fondo negro y respuestas grises</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('module5')}>
-                      <span className="hub-icon">⚡</span>
-                      <span className="hub-title">Módulo 5</span>
-                      <span className="hub-desc">Flash automático (modo enfoque)</span>
+                    <button className="hub-btn" onClick={() => startModule('module6')}>
+                      <span className="hub-icon">📸</span>
+                      <span className="hub-title">Módulo 6</span>
+                      <span className="hub-desc">Estilo Instagram (Imagen + Pregunta)</span>
                     </button>
                   </div>
                   <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
@@ -1279,6 +1279,79 @@
                     ) : (
                       <div className="m5-answer m5-fade-in">{currentQuestion.answer}</div>
                     )}
+                  </div>
+                </main>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'module6' && currentQuestion && (
+                <main 
+                  className="module6-area"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div className="m6-card">
+                    <div className="m6-header">
+                      <div className="m6-avatar">Q</div>
+                      <div className="m6-user-info">
+                        <span className="m6-username">Cuestionario_App</span>
+                        <span className="m6-location">Módulo 6 • Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                      </div>
+                      <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                    </div>
+
+                    <div className="m6-image-container" onClick={() => setRevealed(!revealed)}>
+                      <img 
+                        src={`https://picsum.photos/1080/1350?random=${currentIndex}`} 
+                        alt="Instagram style" 
+                        className="m6-main-image"
+                        loading="lazy"
+                      />
+                      {!revealed && (
+                        <div className="m6-image-overlay">
+                          <span className="m6-tap-hint">Toca para ver la respuesta</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="m6-content-section">
+                      <div className="m6-interactions">
+                        <span className="m6-icon">❤️</span>
+                        <span className="m6-icon">💬</span>
+                        <span className="m6-icon">🚀</span>
+                        <span className="m6-icon m6-icon-save">🔖</span>
+                      </div>
+                      
+                      <div className="m6-text-content">
+                        <p className="m6-question-text">
+                          <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
+                        </p>
+                        
+                        {revealed && (
+                          <div className="m6-answer-section m6-fade-in">
+                            <p className="m6-answer-text">
+                              <span className="m6-username-inline">Respuesta:</span> {currentQuestion.answer}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="m6-footer">
+                        <button 
+                          className="m6-nav-btn" 
+                          onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
+                          disabled={currentIndex === 0}
+                        >
+                          Anterior
+                        </button>
+                        <button 
+                          className="m6-nav-btn m6-next-btn" 
+                          onClick={() => { setRevealed(false); goToNextQuestion(); }}
+                        >
+                          {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </main>
               )}
