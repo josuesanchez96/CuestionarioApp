@@ -826,13 +826,13 @@ body:has(.module4-area) {
   max-width: 500px;
   margin-top: auto;
   margin-bottom: 20px;
-  background: rgba(31, 41, 55, 0.4); /* Matches clock circular bg: #1f2937 at 40% */
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(31, 41, 55, 0.15); /* Reduced opacity for a cleaner look */
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Softer border */
   border-radius: 20px;
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px); /* Slightly lower blur */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Much softer shadow */
   transition: background 0.3s ease, border-color 0.3s ease;
 }
 
@@ -846,8 +846,8 @@ body:has(.module4-area) {
   top: 0;
   left: 0;
   height: 100%;
-  background: rgba(255, 255, 255, 0.15);
-  border-right: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.25); /* More visible against the transparent background */
+  border-right: 1.5px solid rgba(255, 255, 255, 0.3); /* Softer divider */
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
   z-index: 0;
 }
@@ -868,7 +868,7 @@ body:has(.module4-area) {
   border: none;
   background: transparent;
   color: #ffffff;
-  filter: drop-shadow(0px 2px 5px rgba(0, 0, 0, 0.9));
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.3)); /* Softer icon shadow */
   font-size: 1.25rem;
   font-family: "Segoe UI Symbol", sans-serif;
   font-weight: 700;

@@ -1062,7 +1062,7 @@
 
           // 2. Intentar restaurar progreso del nuevo grupo
           let restored = false;
-          if (!forceReset && (oldGroup !== newGroup || !gameStarted)) {
+          if (!forceReset && (oldGroup !== newGroup)) {
             const saved = localStorage.getItem(`cuestionario_session_${newGroup}`);
             if (saved) {
               try {
