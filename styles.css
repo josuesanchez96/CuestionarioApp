@@ -842,14 +842,14 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  background: #3b82f6; /* Azul AM */
+  background: rgba(255, 255, 255, 0.15);
+  border-right: 2px solid rgba(255, 255, 255, 0.4);
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
   z-index: 0;
-  opacity: 1; /* Tono intenso para coincidir con el borde del reloj */
 }
 
 .m3-progress-fill.pm-color {
-  background: #f97316; /* Naranja PM */
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .m3-aurora-mode .m3-progress-fill {

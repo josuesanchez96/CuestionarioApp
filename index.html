@@ -958,37 +958,81 @@
           setRevealed(false);
         }
 
+        const getModuleGroup = (m) => {
+          if (!m) return null;
+          if (m === 'quiz') return 'quiz';
+          if (['module3', 'module4', 'module5', 'module6'].includes(m)) return 'study';
+          return null;
+        };
+
         function startModule(mode, forceReset = false, filterMode = 'all') {
-          // Compatibility with old boolean calls: false -> 'pending', true -> 'all'
-          let actualFilter = filterMode;
-          if (filterMode === false) actualFilter = 'pending';
-          if (filterMode === true) actualFilter = 'all';
+          const oldGroup = getModuleGroup(prevMode);
+          const newGroup = getModuleGroup(mode);
 
-          const studyModules = ['module3', 'module4', 'module5', 'module6'];
-          const isStudyModule = studyModules.includes(mode);
-          const wasStudyModule = studyModules.includes(prevMode);
-          const shouldContinue = !forceReset && isStudyModule && wasStudyModule && questions.length > 0 && !gameOver;
-
-          if (!shouldContinue) {
-            let filteredRows = rawRows;
-            if (mode === 'module6') {
-              if (actualFilter === 'pending') {
-                filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
-                if (filteredRows.length === 0) filteredRows = rawRows;
-              } else if (actualFilter === 'knownOnly') {
-                filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
-              }
-            }
-            const shuffled = shuffleArray(filteredRows);
-            setQuestions(shuffled);
-            setCurrentIndex(0);
-            setScore(0);
-            setCorrectCount(0);
-            setWrongCount(0);
-            setFailedQuestions([]);
+          // 1. Guardar progreso del grupo anterior si cambiamos de grupo
+          if (oldGroup && oldGroup !== newGroup) {
+            const session = { 
+              questions, 
+              currentIndex, 
+              score, 
+              correctCount, 
+              wrongCount, 
+              failedQuestions,
+              gameOver
+            };
+            localStorage.setItem(`cuestionario_session_${oldGroup}`, JSON.stringify(session));
           }
 
-          setGameOver(false);
+          // 2. Intentar restaurar progreso del nuevo grupo
+          let restored = false;
+          if (!forceReset && (oldGroup !== newGroup || !gameStarted)) {
+            const saved = localStorage.getItem(`cuestionario_session_${newGroup}`);
+            if (saved) {
+              try {
+                const session = JSON.parse(saved);
+                if (session.questions && session.questions.length > 0) {
+                  setQuestions(session.questions);
+                  setCurrentIndex(session.currentIndex);
+                  setScore(session.score || 0);
+                  setCorrectCount(session.correctCount || 0);
+                  setWrongCount(session.wrongCount || 0);
+                  setFailedQuestions(session.failedQuestions || []);
+                  setGameOver(session.gameOver || false);
+                  restored = true;
+                }
+              } catch (e) { console.warn("Error restaurando sesión:", e); }
+            }
+          }
+
+          // 3. Lógica normal si no se restauró nada (o es el mismo grupo)
+          if (!restored) {
+            const shouldContinueInGroup = !forceReset && oldGroup === newGroup && questions.length > 0 && !gameOver;
+
+            if (!shouldContinueInGroup) {
+              let actualFilter = filterMode;
+              if (filterMode === false) actualFilter = 'pending';
+              if (filterMode === true) actualFilter = 'all';
+
+              let filteredRows = rawRows;
+              if (mode === 'module6') {
+                if (actualFilter === 'pending') {
+                  filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
+                  if (filteredRows.length === 0) filteredRows = rawRows;
+                } else if (actualFilter === 'knownOnly') {
+                  filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
+                }
+              }
+              const shuffled = shuffleArray(filteredRows);
+              setQuestions(shuffled);
+              setCurrentIndex(0);
+              setScore(0);
+              setCorrectCount(0);
+              setWrongCount(0);
+              setFailedQuestions([]);
+              setGameOver(false);
+            }
+          }
+
           setGameStarted(true);
           setGameMode(mode);
           setPrevMode(mode); 
@@ -1016,10 +1060,6 @@
           setConfirm(null);
         }
 
-        function handleFlashcardNext() {
-          setRevealed(false);
-          goToNextQuestion();
-        }
 
         const toggleKnown = (question) => {
           const key = question.question + question.answer;
@@ -1153,8 +1193,8 @@
                 <section className="welcome-card">
                   <h2>Sube tu archivo para empezar</h2>
                   <p>
-                    Carga tu Excel una vez y elige entre dos modos de estudio:
-                    cuestionario de opción múltiple o flashcard.
+                    Carga tu Excel una vez y elige entre diferentes módulos de estudio:
+                    cuestionario estilo examen o modos de repaso.
                   </p>
                   <p>Columna 1: pregunta · Columna 2: respuesta correcta.</p>
                 </section>
@@ -1170,32 +1210,27 @@
                     <button className="hub-btn" onClick={() => startModule('quiz')}>
                       <span className="hub-icon">🎯</span>
                       <span className="hub-title">Módulo 1</span>
-                      <span className="hub-desc">Opción múltiple con puntaje</span>
-                    </button>
-                    <button className="hub-btn" onClick={() => startModule('flashcard')}>
-                      <span className="hub-icon">👁️</span>
-                      <span className="hub-title">Módulo 2</span>
-                      <span className="hub-desc">Flashcard – Revelar respuesta</span>
+                      <span className="hub-desc">Cuestionario con puntaje y aciertos</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('module3')}>
                       <span className="hub-icon">🌙</span>
-                      <span className="hub-title">Módulo 3</span>
-                      <span className="hub-desc">Foco oscuro, pregunta y respuesta</span>
+                      <span className="hub-title">Módulo 2</span>
+                      <span className="hub-desc">Foco concentrado con reloj y aurora</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('module4')}>
                       <span className="hub-icon">🖤</span>
-                      <span className="hub-title">Módulo 4</span>
-                      <span className="hub-desc">Fondo negro y respuestas grises</span>
+                      <span className="hub-title">Módulo 3</span>
+                      <span className="hub-desc">Minimalista: Fondo negro y respuestas grises</span>
                     </button>
                      <button className="hub-btn" onClick={() => startModule('module5')}>
                       <span className="hub-icon">🚀</span>
-                      <span className="hub-title">Módulo 5</span>
-                      <span className="hub-desc">Estudio espacial con animaciones</span>
+                      <span className="hub-title">Módulo 4</span>
+                      <span className="hub-desc">Estudio espacial con planetas y cometas</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('module6')}>
                       <span className="hub-icon">📸</span>
-                      <span className="hub-title">Módulo 6</span>
-                      <span className="hub-desc">Estilo Instagram (Imagen + Pregunta)</span>
+                      <span className="hub-title">Módulo 5</span>
+                      <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
                     </button>
                   </div>
                   <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
@@ -1335,6 +1370,19 @@
                   onTouchEnd={handleTouchEnd}
                   onClick={() => setRevealed(!revealed)}
                 >
+                  <div className="m5-top-layout">
+                    <div className="m5-progress-text">
+                      {currentIndex + 1} / {totalQuestions}
+                    </div>
+                    <button 
+                      className="m5-close-btn" 
+                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                      title="Salir"
+                    >
+                      <span className="m5-close-text">Salir</span> ⛌
+                    </button>
+                  </div>
+
                   <div className="m4-question-card">
                     <div className="m4-question-text">{currentQuestion.question}</div>
                   </div>
@@ -1342,17 +1390,6 @@
                   <div className="m4-answer-box">
                     <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
                       {currentQuestion.answer}
-                    </div>
-                  </div>
- 
-                  <div className="m4-bottom-actions">
-                    <div className="m4-nav-buttons">
-                      <button className="m4-change-btn" onClick={(e) => {
-                        e.stopPropagation();
-                        handleChangeModule();
-                      }}>
-                        {Math.round(((currentIndex + 1) / totalQuestions) * 100)}%
-                      </button>
                     </div>
                   </div>
                 </main>
@@ -1622,49 +1659,6 @@
                 </div>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'flashcard' && currentQuestion && (
-                <main className="flashcard-area">
-                  <div className="question-card">
-                    <div className="question-label">
-                      Pregunta {currentIndex + 1} / {totalQuestions}
-                    </div>
-                    <div className="question-text">{currentQuestion.question}</div>
-                  </div>
-                  {!revealed ? (
-                    <button className="reveal-btn" onClick={() => {
-                      if (!celebrationUnlocked.current) {
-                        celebrationUnlocked.current = true;
-                        sfxCelebration.current.play().then(() => {
-                          sfxCelebration.current.pause();
-                          sfxCelebration.current.currentTime = 0;
-                        }).catch(() => { });
-                      }
-                      playSound(sfxCorrect);
-                      setRevealed(true);
-                    }}>
-                      👁️ Ver respuesta
-                    </button>
-                  ) : (
-                    <>
-                      <div className="answer-reveal">{currentQuestion.answer}</div>
-                      <button className="reveal-next-btn" onClick={handleFlashcardNext}>
-                        {currentIndex + 1 < totalQuestions ? 'Siguiente →' : '✅ Ver resultados'}
-                      </button>
-                    </>
-                  )}
-                </main>
-              )}
-
-              {gameStarted && !gameOver && gameMode === 'flashcard' && (
-                <div className="bottom-actions">
-                  <button className="ghost-button" onClick={() => askConfirm('¿Reiniciar la ronda desde el principio?', handleRestart)}>
-                    Reiniciar ronda
-                  </button>
-                  <button className="ghost-button" onClick={handleChangeModule}>
-                    🔀 Cambiar módulo
-                  </button>
-                </div>
-              )}
 
               {confirm && (
                 <div className="confirm-overlay">
