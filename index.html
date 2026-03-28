@@ -953,6 +953,40 @@
           setRevealed(false);
         }
 
+        const getFormattedTime = (timeValue) => {
+          if (!timeValue) return "";
+          let dateObj;
+          let originalTimeStr = "";
+          
+          if (typeof timeValue === 'number') {
+            dateObj = new Date(timeValue);
+            originalTimeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } else if (typeof timeValue === 'string') {
+            let cleanStr = timeValue;
+            if (timeValue.includes(', ')) cleanStr = timeValue.split(', ')[1];
+            const parts = cleanStr.split(' a las ');
+            const datePart = parts[0];
+            originalTimeStr = parts[1] || "";
+            const [d, m, y] = datePart.split('/').map(Number);
+            dateObj = new Date(y, m - 1, d);
+          }
+
+          if (!dateObj || isNaN(dateObj.getTime())) return timeValue;
+
+          const now = new Date();
+          // Reset hours to compare only full days
+          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const commentDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+          const diffDays = (today - commentDay) / (1000 * 60 * 60 * 24);
+
+          if (diffDays < 7) {
+            const dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'long' });
+            return `${dayName}, ${dateObj.toLocaleDateString('es-ES')} a las ${originalTimeStr}`;
+          } else {
+            return `${dateObj.toLocaleDateString('es-ES')} a las ${originalTimeStr}`;
+          }
+        };
+
         const getModuleGroup = (m) => {
           if (!m) return null;
           if (m === 'quiz') return 'quiz';
@@ -1095,9 +1129,7 @@
         const addComment = (question) => {
           if (!currentComment.trim()) return;
           const key = question.question + question.answer;
-          const now = new Date();
-          const timestamp = `${now.toLocaleDateString()} a las ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-          const newComment = { text: currentComment.trim(), time: timestamp };
+          const newComment = { text: currentComment.trim(), time: Date.now() };
           setComments(prev => ({
             ...prev,
             [key]: [...(prev[key] || []), newComment]
@@ -1517,7 +1549,7 @@
                                 <div key={i} className="m6-comment">
                                   <div className="m6-comment-top">
                                     <span className="m6-username-inline">josued.sanchez</span>
-                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : c.time}</span>
+                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
                                   </div>
                                   <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
                                 </div>
