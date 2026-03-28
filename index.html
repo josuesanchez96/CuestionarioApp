@@ -692,6 +692,24 @@
           return () => window.removeEventListener('keydown', handleKeyDown);
         }, [gameMode, gameStarted, gameOver]);
 
+        // --- Sync GameState with manual Fullscreen exit (Esc) ---
+        useEffect(() => {
+          const handleFsChange = () => {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+            if (!isFs && gameMode === 'module4' && gameStarted) {
+              handleChangeModule();
+            }
+          };
+          document.addEventListener('fullscreenchange', handleFsChange);
+          document.addEventListener('webkitfullscreenchange', handleFsChange);
+          document.addEventListener('msfullscreenchange', handleFsChange);
+          return () => {
+            document.removeEventListener('fullscreenchange', handleFsChange);
+            document.removeEventListener('webkitfullscreenchange', handleFsChange);
+            document.removeEventListener('msfullscreenchange', handleFsChange);
+          };
+        }, [gameMode, gameStarted]);
+
         // --- Core Effects ---
 
         const progressPercent = useMemo(() => {
@@ -994,9 +1012,39 @@
           return null;
         };
 
+        async function toggleFullscreen(enable) {
+          try {
+            if (enable) {
+              if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+              } else if (document.documentElement.webkitRequestFullscreen) {
+                await document.documentElement.webkitRequestFullscreen();
+              } else if (document.documentElement.msRequestFullscreen) {
+                await document.documentElement.msRequestFullscreen();
+              }
+            } else {
+              if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
+                if (document.exitFullscreen) {
+                  await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                  await document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                  await document.msExitFullscreen();
+                }
+              }
+            }
+          } catch (err) {
+            console.warn("Fullscreen error:", err);
+          }
+        }
+
         function startModule(mode, forceReset = false, filterMode = 'all') {
           const oldGroup = getModuleGroup(prevMode);
           const newGroup = getModuleGroup(mode);
+
+          if (mode === 'module4') {
+            toggleFullscreen(true);
+          }
 
           // 1. Guardar progreso del grupo anterior si cambiamos de grupo
           if (oldGroup && oldGroup !== newGroup) {
@@ -1072,6 +1120,9 @@
         }
 
         function handleChangeModule() {
+          if (gameMode === 'module4') {
+            toggleFullscreen(false);
+          }
           setPrevMode(gameMode);
           setGameStarted(false);
           setGameOver(false);
