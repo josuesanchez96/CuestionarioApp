@@ -652,12 +652,12 @@ body:has(.module4-area) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   position: fixed;
   inset: 0;
   overflow-y: auto;
-  padding: 20px;
+  padding: 12vh 20px 20px 20px;
   z-index: 10;
 }
 
@@ -838,10 +838,10 @@ body:has(.module4-area) {
   background: transparent;
 }
  
- .m3-content-wrapper {
+.m3-content-wrapper {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   width: 100%;
   gap: 4px;
