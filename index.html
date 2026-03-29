@@ -257,6 +257,8 @@
         });
         const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
+        const [localImages, setLocalImages] = useState([]);
+        const folderInputRef = useRef(null);
 
         const totalQuestions = questions.length;
 
@@ -833,6 +835,34 @@
           e.target.value = "";
         }
 
+        function handleFolderSelect(e) {
+          const files = Array.from(e.target.files);
+          
+          // --- Validación de tamaño (Máximo 100MB) ---
+          const totalSize = files.reduce((acc, f) => acc + f.size, 0);
+          const limit = 100 * 1024 * 1024; // 100 MegaBytes
+          if (totalSize > limit) {
+             const sizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
+             alert(`La carpeta es demasiado pesada (${sizeInMB} MB). El límite para este módulo es de 100 MB para asegurar un buen rendimiento. Por favor, elige una carpeta más pequeña.`);
+             e.target.value = "";
+             return;
+          }
+
+          const imageFiles = files.filter(f => f.type.startsWith('image/'));
+          if (imageFiles.length === 0) {
+            alert("No se encontraron imágenes en la carpeta seleccionada.");
+            return;
+          }
+          // Limpiar URLs previas para evitar fugas de memoria
+          localImages.forEach(url => URL.revokeObjectURL(url));
+          
+          const urls = imageFiles.map(f => URL.createObjectURL(f));
+          setLocalImages(urls);
+          if (gameMode === null) {
+            startModule('module7');
+          }
+        }
+
         function prepareOptionsForCurrentQuestion() {
           const current = questions[currentIndex];
           if (!current) return;
@@ -948,7 +978,7 @@
             setGameMode(null);
             return;
           }
-          if (gameMode === 'module6') {
+          if (gameMode === 'module6' || gameMode === 'module7') {
             setShowRestartChoice(true);
           } else {
             startModule(gameMode, true);
@@ -1008,7 +1038,7 @@
         const getModuleGroup = (m) => {
           if (!m) return null;
           if (m === 'quiz') return 'quiz';
-          if (['module3', 'module4', 'module5', 'module6'].includes(m)) return 'study';
+          if (['module3', 'module4', 'module5', 'module6', 'module7'].includes(m)) return 'study';
           return null;
         };
 
@@ -1117,6 +1147,16 @@
           setFeedback(null);
           setRevealed(false);
           setShowRestartChoice(false);
+
+          if (mode === 'module7') {
+            if (localImages.length > 0) {
+              setLocalImages(prev => shuffleArray(prev));
+            } else {
+              setTimeout(() => {
+                  folderInputRef.current?.click();
+              }, 100);
+            }
+          }
         }
 
         function handleChangeModule() {
@@ -1309,6 +1349,11 @@
                       <span className="hub-icon">📸</span>
                       <span className="hub-title">Módulo 5</span>
                       <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
+                    </button>
+                    <button className="hub-btn" onClick={() => startModule('module7')}>
+                      <span className="hub-icon">📂</span>
+                      <span className="hub-title">Módulo 6</span>
+                      <span className="hub-desc">Estilo Instagram con tus propias imágenes locales</span>
                     </button>
                   </div>
                   <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
@@ -1649,6 +1694,151 @@
                 </main>
               )}
 
+              {gameStarted && !gameOver && gameMode === 'module7' && currentQuestion && (
+                <main 
+                  className="module6-area"
+                  onTouchStart={handleTouchStart}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                >
+                  <div className="m6-card" key={currentIndex}>
+                    <div className="m6-header">
+                      <div className="m6-user-info-group">
+                        <div className="m6-avatar">Q</div>
+                        <div className="m6-user-texts">
+                          <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                        </div>
+                      </div>
+                      <div className="m6-header-actions">
+                        <button className="m6-restart-btn" title="Cambiar carpeta de imágenes" onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}>📂</button>
+                        <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
+                        <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                      </div>
+                    </div>
+
+                     <div 
+                        className="m6-image-container" 
+                        onClick={() => {
+                          if (!revealed) {
+                            const key = currentQuestion.question + currentQuestion.answer;
+                            setViewCounts(prev => ({
+                              ...prev,
+                              [key]: (prev[key] || 0) + 1
+                            }));
+                          }
+                          setRevealed(!revealed);
+                        }}
+                      >
+                      {localImages.length > 0 ? (
+                        <img 
+                          src={localImages[currentIndex % localImages.length]} 
+                          alt="Local image" 
+                          className="m6-main-image"
+                          key={`local-img-${currentIndex}`}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="m6-no-image-placeholder" style={{ padding: '40px', textAlign: 'center', background: '#f3f4f6', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); folderInputRef.current?.click(); }}>
+                          <p>Haz clic para elegir una carpeta con imágenes</p>
+                        </div>
+                      )}
+                      
+                      {showBigHeart && (
+                        <div className="m6-heart-animation">❤️</div>
+                      )}
+                      
+                      <div className={`m6-image-answer-overlay ${revealed ? 'm6-visible' : ''}`}>
+                        <div className="m6-overlay-answer-box">
+                          {currentQuestion.answer}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="m6-content-section">
+                      <div className="m6-interactions">
+                        <div className="m6-interaction-group">
+                          <span 
+                            className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
+                            onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
+                            title={likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? "Ya me la sé" : "Marcar como conocida"}
+                          >
+                            {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
+                          </span>
+                        </div>
+
+                        <div className="m6-interaction-group">
+                          <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
+                            {showComments ? '💬' : '🗨️'}
+                          </span>
+                          <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
+                        </div>
+
+                        <div className="m6-interaction-group">
+                          <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
+                          <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="m6-text-content">
+                        <p className="m6-question-text">
+                          <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
+                        </p>
+                        
+                        {showComments && (
+                          <div className="m6-comments-container m6-fade-in">
+                            <div className="m6-comments-list">
+                              {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
+                                <div key={i} className="m6-comment">
+                                  <div className="m6-comment-top">
+                                    <span className="m6-username-inline">josued.sanchez</span>
+                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
+                                  </div>
+                                  <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
+                                </div>
+                              ))}
+                              {!(comments[currentQuestion.question + currentQuestion.answer] || []).length && (
+                                <p className="m6-no-comments">No hay comentarios aún.</p>
+                              )}
+                            </div>
+                            <div className="m6-add-comment">
+                              <input 
+                                type="text" 
+                                placeholder="Añade un comentario..." 
+                                value={currentComment}
+                                onChange={(e) => setCurrentComment(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
+                              />
+                              <button 
+                                onClick={() => addComment(currentQuestion)}
+                                disabled={!currentComment.trim()}
+                              >
+                                Publicar
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="m6-footer">
+                        <button 
+                          className="m6-nav-btn" 
+                          onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
+                          disabled={currentIndex === 0}
+                        >
+                          Anterior
+                        </button>
+                        <button 
+                          className="m6-nav-btn m6-next-btn" 
+                          onClick={() => { setRevealed(false); goToNextQuestion(); }}
+                        >
+                          {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </main>
+              )}
+
               {gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
                 <main className="game-area">
                   <div className="question-card question-enter">
@@ -1779,7 +1969,7 @@
                   )}
                   <div className="results-actions">
                     <button className="restart-button" onClick={handleRestart}>
-                      🔁 {gameMode === 'module6' ? 'Modo de repaso' : 'Repetir ronda'}
+                      🔁 {(gameMode === 'module6' || gameMode === 'module7') ? 'Modo de repaso' : 'Repetir ronda'}
                     </button>
                     <button className="change-module-btn" onClick={handleChangeModule}>
                       🔀 Cambiar módulo
@@ -1818,14 +2008,14 @@
                     <div className="m6-restart-options">
                               <button 
                                 className="m6-choice-btn m6-primary" 
-                                onClick={() => startModule('module6', true, 'pending')}
+                                onClick={() => startModule(gameMode, true, 'pending')}
                               >
                                 🎯 Solo pendientes 
                                 <small>({rawRows.length - likedQuestions.length} restantes)</small>
                               </button>
                               <button 
                                 className="m6-choice-btn m6-success" 
-                                onClick={() => startModule('module6', true, 'knownOnly')}
+                                onClick={() => startModule(gameMode, true, 'knownOnly')}
                                 disabled={likedQuestions.length === 0}
                               >
                                 ❤️ Solo conocidas
@@ -1833,7 +2023,7 @@
                               </button>
                               <button 
                                 className="m6-choice-btn m6-secondary" 
-                                onClick={() => startModule('module6', true, 'all')}
+                                onClick={() => startModule(gameMode, true, 'all')}
                               >
                                 🔄 Repasar todo
                                 <small>({rawRows.length} preguntas)</small>
@@ -1848,6 +2038,17 @@
                   </div>
                 </div>
               )}
+
+              <input
+                type="file"
+                ref={folderInputRef}
+                style={{ display: 'none' }}
+                webkitdirectory="true"
+                mozdirectory="true"
+                directory="true"
+                multiple
+                onChange={handleFolderSelect}
+              />
             </div>
           </div>
         );
