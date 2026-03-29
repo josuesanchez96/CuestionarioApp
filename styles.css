@@ -846,14 +846,16 @@ body:has(.module4-area) {
   top: 0;
   left: 0;
   height: 100%;
-  background: rgba(255, 255, 255, 0.25); /* More visible against the transparent background */
-  border-right: 1.5px solid rgba(255, 255, 255, 0.3); /* Softer divider */
+  background: linear-gradient(90deg, rgba(147, 51, 234, 0.4), rgba(59, 130, 246, 0.4)); /* Vibrant purple to blue */
+  border-right: 2px solid rgba(255, 255, 255, 0.5); /* More distinct divider */
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); /* Subtle glow */
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease;
   z-index: 0;
 }
 
 .m3-progress-fill.pm-color {
-  background: rgba(255, 255, 255, 0.15);
+  background: linear-gradient(90deg, rgba(249, 115, 22, 0.4), rgba(234, 179, 8, 0.4)); /* Vibrant orange to yellow */
+  box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
 }
 
 .m3-aurora-mode .m3-progress-fill {
