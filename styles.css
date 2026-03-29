@@ -672,7 +672,7 @@ body:has(.module4-area) {
   pointer-events: none; /* Let clicks pass through to background or nothing */
 }
 
-.module3-area > *:not(.m3-animated-bg) {
+.module3-area > *:not(.m3-animated-bg):not(.m5-top-layout) {
   position: relative;
   z-index: 1;
 }

@@ -255,6 +255,7 @@
           const saved = localStorage.getItem('cuestionario_viewCounts');
           return saved ? JSON.parse(saved) : {};
         });
+        const isSwipeRef = useRef(false);
         const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
 
@@ -653,7 +654,7 @@
         }, [revealed, currentIndex]);
 
         useEffect(() => {
-          const isNavModule = (gameMode === 'module3' || gameMode === 'module5');
+          const isNavModule = ['module3', 'module4', 'module5', 'module6'].includes(gameMode);
           if (!isNavModule || !gameStarted || gameOver) return;
 
           const handleKeyDown = (e) => {
@@ -682,6 +683,11 @@
               case 'Escape':
                 e.preventDefault();
                 handleChangeModule();
+                break;
+              case 's':
+              case 'S':
+                e.preventDefault();
+                setLightMode((prev) => (prev === 0 ? 2 : prev === 2 ? 3 : 0));
                 break;
               default:
                 break;
@@ -1198,19 +1204,25 @@
         };
 
         const handleTouchEnd = () => {
-          if (!touchStartX.current || !touchEndX.current) return;
+          if (!touchStartX.current || !touchEndX.current) {
+            isSwipeRef.current = false;
+            return;
+          }
           const distance = touchStartX.current - touchEndX.current;
           const minSwipeDistance = 50;
-          if (distance > minSwipeDistance) {
-            // Swipe left -> Next question
-            setRevealed(false);
-            goToNextQuestion();
-          } else if (distance < -minSwipeDistance) {
-            // Swipe right -> Previous question
-            if (currentIndex > 0) {
+          if (Math.abs(distance) > minSwipeDistance) {
+            isSwipeRef.current = true;
+            if (distance > minSwipeDistance) {
               setRevealed(false);
-              setCurrentIndex((prev) => Math.max(0, prev - 1));
+              goToNextQuestion();
+            } else if (distance < -minSwipeDistance) {
+              if (currentIndex > 0) {
+                setRevealed(false);
+                setCurrentIndex((prev) => Math.max(0, prev - 1));
+              }
             }
+          } else {
+            isSwipeRef.current = false;
           }
           // Reset
           touchStartX.current = null;
@@ -1333,7 +1345,11 @@
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
-                  onClick={() => {
+                  onClick={(e) => {
+                    if (isSwipeRef.current) {
+                      isSwipeRef.current = false;
+                      return;
+                    }
                     if (!revealed && !celebrationUnlocked.current) {
                       celebrationUnlocked.current = true;
                       sfxCelebration.current.play().then(() => {
@@ -1345,7 +1361,30 @@
                   }}
                 >
                   <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
-                  <Clock lightMode={lightMode} />
+                  
+                  <div className="m5-top-layout">
+                    <div className="m5-progress-text">
+                      {currentIndex + 1} / {totalQuestions}
+                    </div>
+                    <button 
+                      className="m5-close-btn" 
+                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                      title="Salir"
+                    >
+                      <span className="m5-close-text">Salir</span> ⛌
+                    </button>
+                  </div>
+
+                  <div 
+                    title="Alternar fondo (Tecla S)"
+                    style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightMode((prev) => (prev === 0 ? 2 : prev === 2 ? 3 : 0));
+                    }}
+                  >
+                    <Clock lightMode={lightMode} />
+                  </div>
                   <div className="m3-content-wrapper">
                     <div 
                       className="m3-question-text" 
@@ -1371,58 +1410,6 @@
                         {currentQuestion.answer}
                       </span>
                     </div>
-                  </div>
-                  <div className={`m3-actions ${lightMode >= 2 ? 'm3-aurora-mode' : ''}`}>
-                    <div className={`m3-progress-fill ${new Date().getHours() >= 12 ? 'pm-color' : ''}`} style={{ width: `${progressPercent}%` }} />
-                    <button
-                      className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setRevealed(false);
-                        setCurrentIndex((prev) => Math.max(0, prev - 1));
-                      }}
-                      disabled={currentIndex === 0}
-                      title="Anterior"
-                    >
-                      ◀
-                    </button>
-                    <button
-                      className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLightMode((prev) => prev === 0 ? 2 : prev === 2 ? 3 : 0);
-                      }}
-                      title="Alternar fondo"
-                    >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="5"></circle>
-                        <line x1="12" y1="1" x2="12" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="23"></line>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                        <line x1="1" y1="12" x2="3" y2="12"></line>
-                        <line x1="21" y1="12" x2="23" y2="12"></line>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                      </svg>
-                    </button>
-                    <button
-                      className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleChangeModule();
-                      }}
-                      title="Cambiar módulo"
-                    >
-                      ⛌
-                    </button>
-                    <button className={`m3-next-btn-dark ${lightMode >= 2 ? 'transparent-btn' : ''}`} onClick={(e) => {
-                      e.stopPropagation();
-                      setRevealed(false);
-                      goToNextQuestion();
-                    }}>
-                      {currentIndex + 1 < totalQuestions ? '▶' : '■'}
-                    </button>
                   </div>
                 </main>
               )}
