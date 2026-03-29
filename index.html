@@ -1285,7 +1285,7 @@
 
                   <div 
                     title="Alternar fondo (Tecla S)"
-                    style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100 }}
+                    style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100, WebkitTapHighlightColor: 'transparent' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       setLightMode((prev) => (prev === 0 ? 1 : 0));
