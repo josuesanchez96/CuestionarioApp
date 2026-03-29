@@ -105,13 +105,12 @@
               </defs>
               {/* Background circle */}
               <circle
-                className={`clock-circle-bg ${lightMode >= 2 ? 'aurora-circle-bg-vibrant' : ''}`}
+                className="clock-circle-bg"
                 cx="140"
                 cy="140"
                 r={radius}
                 strokeWidth="12"
                 fill="none"
-                style={{ opacity: lightMode >= 2 ? 0.6 : 1, transition: 'none', stroke: lightMode >= 2 ? 'rgba(255,255,255,0.4)' : '#1f2937' }}
               />
               {/* Water fill group */}
               <g clipPath="url(#circleMask)">
@@ -124,7 +123,7 @@
                   {/* Back wave */}
                   <path
                     className="clock-water-wave clock-water-wave-2"
-                    style={{ opacity: lightMode >= 2 ? 0.6 : 0.5, transition: 'none' }}
+                    style={{ transition: 'none' }}
                     d="M 0 0 Q 70 12, 140 0 T 280 0 T 420 0 T 560 0 V 320 H 0 Z"
                   />
                   {/* Front wave */}
@@ -137,7 +136,7 @@
               </g>
               {/* Progress circle */}
               <circle
-                className={`clock-circle-progress ${isPM ? 'pm-color' : ''} ${lightMode >= 2 ? 'aurora-circle-vibrant' : ''}`}
+                className={`clock-circle-progress ${isPM ? 'pm-color' : ''}`}
                 cx="140"
                 cy="140"
                 r={radius}
@@ -147,10 +146,10 @@
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 transform="rotate(-90 140 140)"
-                style={{ opacity: lightMode >= 2 ? 0.7 : 1, transition: 'opacity 0.2s' }}
+                style={{ transition: 'opacity 0.2s' }}
               />
             </svg>
-            <div className={`clock-text ${lightMode >= 2 ? 'clock-text-vibrant' : ''}`}>
+            <div className="clock-text">
               {displayTime}
             </div>
           </div>
@@ -216,7 +215,7 @@
         const [lightMode, setLightMode] = useState(() => {
           const saved = localStorage.getItem('cuestionario_lightMode');
           return saved !== null ? parseInt(saved, 10) : 0;
-        }); // 0 = oscuro, 2 = aurora (sol), 3 = vibrante sin aurora
+        }); // 0 = oscuro, 1 = claro
         const gradientRef = useRef(null);
         const fireworksIntervalRef = useRef(null);
         const touchStartX = useRef(null);
@@ -288,102 +287,8 @@
           else localStorage.removeItem('cuestionario_prevMode');
         }, [prevMode]);
 
-        // --- Ambient Background Effect ---
-        useEffect(() => {
-          if (gameMode !== 'module3' || lightMode !== 2 || !gameStarted || gameOver || !gradientRef.current) return;
-
-          let animationFrameId;
-          const colors = [
-            [62, 35, 255],
-            [60, 255, 60],
-            [255, 35, 98],
-            [45, 175, 230],
-            [255, 0, 255],
-            [255, 128, 0]
-          ];
-          
-          let step = 0;
-          let colorIndices = [0, 1, 2, 3];
-          const gradientSpeed = 0.002;
-
-          const updateGradient = () => {
-            if (!gradientRef.current) return;
-
-            const c0_0 = colors[colorIndices[0]];
-            const c0_1 = colors[colorIndices[1]];
-            const c1_0 = colors[colorIndices[2]];
-            const c1_1 = colors[colorIndices[3]];
-
-            const istep = 1 - step;
-            const r1 = Math.round(istep * c0_0[0] + step * c0_1[0]);
-            const g1 = Math.round(istep * c0_0[1] + step * c0_1[1]);
-            const b1 = Math.round(istep * c0_0[2] + step * c0_1[2]);
-            const color1 = `rgb(${r1},${g1},${b1})`;
-
-            const r2 = Math.round(istep * c1_0[0] + step * c1_1[0]);
-            const g2 = Math.round(istep * c1_0[1] + step * c1_1[1]);
-            const b2 = Math.round(istep * c1_0[2] + step * c1_1[2]);
-            const color2 = `rgb(${r2},${g2},${b2})`;
-
-            gradientRef.current.style.background = `linear-gradient(to right, ${color1} 0%, ${color2} 100%)`;
-
-            step += gradientSpeed;
-            if (step >= 1) {
-              step %= 1;
-              colorIndices[0] = colorIndices[1];
-              colorIndices[2] = colorIndices[3];
-
-              colorIndices[1] = (colorIndices[1] + Math.floor(1 + Math.random() * (colors.length - 1))) % colors.length;
-              colorIndices[3] = (colorIndices[3] + Math.floor(1 + Math.random() * (colors.length - 1))) % colors.length;
-            }
-            
-            animationFrameId = requestAnimationFrame(updateGradient);
-          };
-
-          animationFrameId = requestAnimationFrame(updateGradient);
-
-          return () => {
-             cancelAnimationFrame(animationFrameId);
-             if (gradientRef.current) gradientRef.current.style.background = '';
-          };
-        }, [gameMode, lightMode, gameStarted, gameOver]);
-
-        // --- Continuous Fireworks Effect (lightMode === 3) ---
-        useEffect(() => {
-          if (gameMode === 'module3' && lightMode === 3 && gameStarted && !gameOver) {
-            if (!fireworksIntervalRef.current) {
-              const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-              function randomInRange(min, max) {
-                return Math.random() * (max - min) + min;
-              }
-
-              fireworksIntervalRef.current = setInterval(() => {
-                const particleCount = 40;
-                // launch from near the top-left and top-right occasionally
-                confetti(Object.assign({}, defaults, { 
-                  particleCount, 
-                  origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } 
-                }));
-                confetti(Object.assign({}, defaults, { 
-                  particleCount, 
-                  origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } 
-                }));
-              }, 400);
-            }
-          } else {
-            if (fireworksIntervalRef.current) {
-              clearInterval(fireworksIntervalRef.current);
-              fireworksIntervalRef.current = null;
-            }
-          }
-
-          return () => {
-            if (fireworksIntervalRef.current) {
-              clearInterval(fireworksIntervalRef.current);
-              fireworksIntervalRef.current = null;
-            }
-          };
-        }, [gameMode, lightMode, gameStarted, gameOver]);
+        // --- Ambient Background Effect Removed ---
+        // --- Continuous Fireworks Effect Removed ---
 
         const currentQuestion =
           questions.length && currentIndex < questions.length
@@ -687,7 +592,7 @@
               case 's':
               case 'S':
                 e.preventDefault();
-                setLightMode((prev) => (prev === 0 ? 2 : prev === 2 ? 3 : 0));
+                setLightMode((prev) => (prev === 0 ? 1 : 0));
                 break;
               default:
                 break;
@@ -1231,12 +1136,15 @@
 
 
         const successPercentage =
-          correctCount + wrongCount === 0
+                  correctCount + wrongCount === 0
             ? 0
             : Math.round((correctCount / (correctCount + wrongCount)) * 100);
 
+        const isDarkTheme = gameStarted && (gameMode === 'module4' || gameMode === 'module5' || (gameMode === 'module3' && lightMode === 0));
+        const isModule3Light = gameStarted && gameMode === 'module3' && lightMode === 1;
+
         return (
-          <div className={`app-root ${(gameMode === 'module3' || gameMode === 'module4') ? 'dark-theme' : ''}`}>
+          <div className={`app-root ${isDarkTheme ? 'dark-theme' : ''} ${isModule3Light ? 'module3-light-theme' : ''}`}>
             <div className="background-gradient" />
             <div className="floating-orb orb-1" />
             <div className="floating-orb orb-2" />
@@ -1304,9 +1212,9 @@
                       <span className="hub-desc">Cuestionario con puntaje y aciertos</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('module3')}>
-                      <span className="hub-icon">🌙</span>
+                      <span className="hub-icon">⏱️</span>
                       <span className="hub-title">Módulo 2</span>
-                      <span className="hub-desc">Foco concentrado con reloj y aurora</span>
+                      <span className="hub-desc">Foco concentrado con reloj (Claro/Oscuro)</span>
                     </button>
                     <button className="hub-btn" onClick={() => startModule('module4')}>
                       <span className="hub-icon">🖤</span>
@@ -1380,29 +1288,33 @@
                     style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100 }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setLightMode((prev) => (prev === 0 ? 2 : prev === 2 ? 3 : 0));
+                      setLightMode((prev) => (prev === 0 ? 1 : 0));
                     }}
                   >
                     <Clock lightMode={lightMode} />
                   </div>
-                  <div className="m3-content-wrapper">
-                    <div 
-                      className="m3-question-text" 
-                      style={{ 
-                        color: '#ffffff',
-                        opacity: 1,
-                        transition: 'color 0.2s, opacity 0.2s'
-                      }}
-                    >
-                      {currentQuestion.question}
-                    </div>
+                  <div className="m3-content-wrapper" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+                    {currentQuestion.question && currentQuestion.question.trim() !== "" && (
+                      <div 
+                        className="m3-question-text" 
+                        style={{ 
+                          opacity: 1,
+                          background: 'transparent',
+                          border: 'none',
+                          boxShadow: 'none',
+                          transition: 'color 0.2s, opacity 0.2s'
+                        }}
+                      >
+                        {currentQuestion.question}
+                      </div>
+                    )}
                     <div
                       className="m3-answer-box"
                       style={{ 
-                        color: '#ffffff',
-                        background: lightMode >= 2 ? 'transparent' : '',
-                        borderColor: lightMode >= 2 ? 'transparent' : '',
                         opacity: 1,
+                        background: 'transparent',
+                        border: 'none',
+                        boxShadow: 'none',
                         transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
                       }}
                     >

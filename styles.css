@@ -640,7 +640,8 @@ body:has(.module4-area) {
   background: transparent !important;
 }
 
-.dark-theme .app-container {
+.dark-theme .app-container,
+.module3-light-theme .app-container {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
@@ -701,18 +702,20 @@ body:has(.module4-area) {
 }
 
 .clock-circle-bg {
+  stroke: #e5e7eb; /* Light gray for Light Mode */
+}
+
+.dark-theme .clock-circle-bg {
   stroke: #1f2937;
 }
 
 .clock-circle-progress {
   stroke: #3b82f6;
-  /* Blue progress color, can be changed */
   transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
 }
 
 .clock-circle-progress.pm-color {
   stroke: #f97316;
-  /* Orange PM progress color */
 }
 
 .clock-water-wave {
@@ -751,7 +754,7 @@ body:has(.module4-area) {
   position: absolute;
   font-size: clamp(3.8rem, 15vw, 6rem);
   font-weight: 700;
-  color: #ffffff;
+  color: #1f2937; /* Dark by default for Light Mode */
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   text-align: center;
@@ -759,9 +762,12 @@ body:has(.module4-area) {
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-.clock-text-vibrant {
+.dark-theme .clock-text {
   color: #ffffff;
-  /* Removed text-shadow to make it look simpler and less illuminated */
+}
+
+.clock-text-vibrant {
+  color: inherit;
 }
 
 @media (min-width: 768px) {
@@ -781,19 +787,28 @@ body:has(.module4-area) {
   font-size: clamp(1.2rem, 2.8vw, 1.7rem);
   font-weight: 600;
   text-align: center;
-  color: #6b7280;
+  color: #1f2937; /* Dark for Light Mode */
   line-height: 1.4;
   user-select: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dark-theme .m3-question-text {
+  color: #ffffff;
 }
 
 .m3-answer-box {
   width: 100%;
   max-width: 600px;
   min-height: 80px;
-  background: #000000;
-  border: 1px solid #000000;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -802,12 +817,26 @@ body:has(.module4-area) {
   margin: 0px 0 10px 0;
   font-size: clamp(1.2rem, 2.8vw, 1.7rem);
   font-weight: 600;
-  color: #6b7280;
+  color: #2563eb; /* Primary blue to stand out in a transparent box */
   text-align: center;
   user-select: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.dark-theme .m3-answer-box {
+  background: transparent;
+  border-color: transparent;
+  color: #60a5fa; /* Lighter blue for dark theme */
+}
+
+.m3-answer-box:hover {
+  background: transparent;
+}
+
+.dark-theme .m3-answer-box:hover {
+  background: transparent;
 }
  
  .m3-content-wrapper {
@@ -818,6 +847,9 @@ body:has(.module4-area) {
   align-items: center;
   width: 100%;
   gap: 4px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .m3-actions {
@@ -1721,17 +1753,21 @@ body:has(.module4-area) {
 .m5-progress-text {
   font-size: 0.95rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.35);
+  color: #9ca3af; /* Gray for Light Mode */
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
   pointer-events: auto;
+}
+
+.dark-theme .m5-progress-text {
+  color: rgba(255, 255, 255, 0.35);
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .m5-close-btn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.35);
+  color: #9ca3af; /* Gray for Light Mode */
   font-size: 1.2rem;
   padding: 8px 12px;
   cursor: pointer;
@@ -1741,10 +1777,19 @@ body:has(.module4-area) {
   align-items: center;
   gap: 8px;
   border-radius: 8px;
+}
+
+.dark-theme .m5-close-btn {
+  color: rgba(255, 255, 255, 0.35);
   text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .m5-close-btn:hover {
+  color: #1f2937;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.dark-theme .m5-close-btn:hover {
   color: rgba(255, 255, 255, 0.8);
   background: rgba(255, 255, 255, 0.08);
 }
