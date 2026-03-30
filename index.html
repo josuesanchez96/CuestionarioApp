@@ -15,6 +15,87 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- canvas-confetti -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Turso libSQL Native HTTP Client (Bypass Browser Module Restrictions) -->
+  <script>
+    window.createTursoClient = function(config) {
+      let finalUrl = config.url;
+      if (finalUrl.startsWith('libsql://')) {
+        finalUrl = finalUrl.replace('libsql://', 'https://');
+      }
+      if (finalUrl.endsWith('/')) finalUrl = finalUrl.slice(0, -1);
+      finalUrl += '/v2/pipeline';
+
+      const mapArgs = (args) => {
+        return (args || []).map(a => {
+          if (a === null || a === undefined) return { type: "null" };
+          if (typeof a === 'number') return { type: Number.isInteger(a) ? "integer" : "float", value: String(a) };
+          return { type: "text", value: String(a) };
+        });
+      };
+
+      const doFetch = async (requests) => {
+        const res = await fetch(finalUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + config.authToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ requests: [...requests, { type: "close" }] })
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error("HTTP " + res.status + ": " + text);
+        }
+        return await res.json();
+      };
+
+      const unwrap = (val) => {
+        if (!val) return null;
+        if (val.type === "integer") return parseInt(val.value, 10);
+        if (val.type === "float") return parseFloat(val.value);
+        if (val.type === "null") return null;
+        return val.value; // text, blob, etc
+      };
+
+      return {
+        async execute(query) {
+          const sql = typeof query === 'string' ? query : query.sql;
+          const args = typeof query === 'string' ? [] : (query.args || []);
+          
+          const payload = [{ type: "execute", stmt: { sql, args: mapArgs(args) } }];
+          const res = await doFetch(payload);
+          
+          const firstResult = res.results[0];
+          if (firstResult && firstResult.type === "error") {
+            throw new Error(firstResult.error.message);
+          }
+          
+          const rs = firstResult && firstResult.response && firstResult.response.result;
+          if (!rs) return { rows: [] };
+          
+          const cols = (rs.cols || []).map(c => c.name);
+          const rows = (rs.rows || []).map(rowArr => {
+             const obj = {};
+             for (let i = 0; i < cols.length; i++) {
+                obj[cols[i]] = unwrap(rowArr[i]);
+             }
+             return obj;
+          });
+          return { rows };
+        },
+        async batch(queries) {
+          const reqs = queries.map(q => ({
+            type: "execute",
+            stmt: { sql: q.sql, args: mapArgs(q.args) }
+          }));
+          const res = await doFetch(reqs);
+          const errRes = res.results.find(r => r && r.type === "error");
+          if (errRes) throw new Error(errRes.error.message);
+          return true;
+        }
+      };
+    };
+  </script>
 </head>
 
 <body>
@@ -84,7 +165,7 @@
 
         // Water fill math (0 to 60 minutes)
         const minuteProgress = minutes / 60;
-        
+
         // El círculo empieza visualmente más arriba (por el radio y el clipPath)
         // Mapeamos el progreso para que en 0 min esté en y=260 (apenas visible) 
         // y en 60 min esté en y=20 (lleno completamente)
@@ -257,6 +338,225 @@
         const isSwipeRef = useRef(false);
         const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
+
+        const [showTursoConfig, setShowTursoConfig] = useState(false);
+        const [tursoUrl, setTursoUrl] = useState(() => localStorage.getItem('turso_url') || 'libsql://cuestionarios-josuedsanchez.aws-us-east-2.turso.io');
+        const [tursoToken, setTursoToken] = useState(() => localStorage.getItem('turso_token') || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzQ4NDU3NjAsImlkIjoiMDE5ZDM3MDYtNzcwMS03YTRlLTgxNjUtMzYwNGMyZjhlOTQ3IiwicmlkIjoiOTc5YjNlYmYtMjcwYi00NDg0LTg2NGMtNjJmNjc4MmZmOWU4In0.cC5xQ6ChjYU7Kk5Quc9LvsAQAx7ABB_N4NjO1ZCMr5-Jss9PevXk7PZu5UPS0t5HgExkMpygpeygh7YwxBsYDg');
+        const [tursoConnected, setTursoConnected] = useState(false);
+        const [tursoError, setTursoError] = useState('');
+        const tursoClient = useRef(null);
+
+        const [libsqlLoaded, setLibsqlLoaded] = useState(false);
+
+        const [activeQuiz, setActiveQuiz] = useState(() => localStorage.getItem('cuestionario_active_quiz') || 'General');
+        const [availableQuizzes, setAvailableQuizzes] = useState(['General']);
+        const [newQuizName, setNewQuizName] = useState('');
+        const [editingRowIndex, setEditingRowIndex] = useState(null);
+        const [editQ, setEditQ] = useState('');
+        const [editA, setEditA] = useState('');
+        const [renameQuizValue, setRenameQuizValue] = useState('');
+
+        const loadQuizFromDB = async (quizName, clearSession = true) => {
+           setActiveQuiz(quizName);
+           localStorage.setItem('cuestionario_active_quiz', quizName);
+           setAvailableQuizzes(prev => prev.includes(quizName) ? prev : [...prev, quizName]);
+           
+           // Evitar que la memoria de otro cuestionario se cuele (forzar reseteo)
+           if (clearSession) {
+             setPrevMode(null);
+             localStorage.removeItem('cuestionario_prevMode');
+             setQuestions([]);
+             setCurrentIndex(0);
+             setCorrectCount(0);
+             setWrongCount(0);
+             localStorage.removeItem('cuestionario_questions');
+           }
+           
+           if (!tursoClient.current) return;
+           try {
+              const res = await tursoClient.current.execute({
+                 sql: "SELECT * FROM turso_questions WHERE quiz = ? OR (quiz IS NULL AND ? = 'General')",
+                 args: [quizName, quizName]
+              });
+              const dbRows = [];
+              const dbLiked = [];
+              const dbViews = {};
+              const dbComments = {};
+              if (res.rows && res.rows.length > 0) {
+                 res.rows.forEach(r => {
+                   dbRows.push({ id: r.id || (r.question + r.answer), question: r.question, answer: r.answer });
+                   const rId = r.question + r.answer;
+                   if (r.hearts > 0) dbLiked.push(rId);
+                   if (r.views > 0) dbViews[rId] = r.views;
+                   if (r.comments && r.comments !== '[]' && r.comments !== '') {
+                     try { dbComments[rId] = JSON.parse(r.comments); } catch(e){}
+                   }
+                 });
+              }
+              setRawRows(dbRows);
+              setLikedQuestions(dbLiked);
+              setViewCounts(dbViews);
+              setComments(dbComments);
+           } catch(e) { console.error(e); }
+        };
+
+        useEffect(() => {
+          const checkLib = setInterval(() => {
+            if (window.createTursoClient) {
+              setLibsqlLoaded(true);
+              clearInterval(checkLib);
+            } else if (window.tursoLoadError) {
+              setTursoError(window.tursoLoadError);
+              clearInterval(checkLib);
+            }
+          }, 100);
+          return () => clearInterval(checkLib);
+        }, []);
+
+        useEffect(() => {
+          if (tursoUrl && tursoToken && libsqlLoaded) {
+            try {
+              let finalUrl = tursoUrl;
+              if (finalUrl.startsWith('libsql://')) {
+                finalUrl = finalUrl.replace('libsql://', 'https://');
+              }
+              tursoClient.current = window.createTursoClient({ url: finalUrl, authToken: tursoToken });
+              const initTurso = async () => {
+                try {
+                  await tursoClient.current.execute(`
+                    CREATE TABLE IF NOT EXISTS turso_questions (
+                      id TEXT PRIMARY KEY,
+                      question TEXT,
+                      answer TEXT,
+                      hearts INTEGER DEFAULT 0,
+                      views INTEGER DEFAULT 0,
+                      comments TEXT DEFAULT '[]'
+                    )
+                  `);
+                  
+                  try {
+                    await tursoClient.current.execute("ALTER TABLE turso_questions ADD COLUMN quiz TEXT DEFAULT 'General'");
+                  } catch(e) {}
+                  
+                  setTursoConnected(true);
+                  setTursoError(''); 
+                  
+                  const res = await tursoClient.current.execute("SELECT DISTINCT quiz FROM turso_questions WHERE quiz IS NOT NULL");
+                  const quizzes = (res.rows || []).map(r => r.quiz || r[0]).filter(Boolean);
+                  if (!quizzes.includes('General')) quizzes.unshift('General');
+                  setAvailableQuizzes(quizzes);
+                  
+                  const initialQuiz = localStorage.getItem('cuestionario_active_quiz') || 'General';
+                  await loadQuizFromDB(initialQuiz, false);
+                } catch (e) {
+                  console.error("Turso init error:", e);
+                  setTursoError("Error: " + (e.message || e));
+                  setTursoConnected(false);
+                }
+              };
+              initTurso();
+            } catch (e) { 
+              console.error(e); 
+              setTursoError("Error de cliente: " + (e.message || e)); 
+            }
+          }
+        }, [tursoUrl, tursoToken, libsqlLoaded]);
+
+        const syncToTurso = async (id, field, value) => {
+          if (!tursoClient.current || !tursoConnected) return;
+          try {
+            const dbId = activeQuiz === 'General' ? id : (activeQuiz + "_" + id);
+            await tursoClient.current.execute({
+              sql: `UPDATE turso_questions SET ${field} = ? WHERE id = ? OR id = ?`,
+              args: [
+                typeof value === 'object' ? JSON.stringify(value) : value, 
+                dbId, id
+              ]
+            });
+          } catch(e) { console.error(e); }
+        };
+
+        const handleRenameQuizAction = async () => {
+          if (!tursoClient.current || !renameQuizValue.trim() || renameQuizValue.trim() === activeQuiz) return;
+          try {
+            await tursoClient.current.execute({
+              sql: "UPDATE turso_questions SET quiz = ? WHERE quiz = ? OR (quiz IS NULL AND ? = 'General')",
+              args: [renameQuizValue.trim(), activeQuiz, activeQuiz]
+            });
+            alert(`✅ Cuestionario renombrado a "${renameQuizValue.trim()}"`);
+            const newVal = renameQuizValue.trim();
+            setAvailableQuizzes(prev => {
+                const arr = [...prev];
+                const idx = arr.indexOf(activeQuiz);
+                if(idx !== -1) arr[idx] = newVal;
+                return arr;
+            });
+            setActiveQuiz(newVal);
+            localStorage.setItem('cuestionario_active_quiz', newVal);
+            setRenameQuizValue('');
+          } catch(e) { alert("❌ Error: " + e.message); }
+        };
+
+        const handleDeleteQuizAction = async () => {
+          if (!tursoClient.current) return;
+          const userInput = window.prompt(`¿Seguro que deseas ELIMINAR permanentemente tu cuestionario "${activeQuiz}" y sus ${rawRows.length} preguntas? Esta acción no se puede deshacer.\n\nContraseña:`);
+          
+          if (!userInput || userInput.trim() !== 'JD-7eliminar') {
+             if (userInput !== null) {
+                 alert("❌ Contraseña incorrecta. Se canceló la eliminación del cuestionario.");
+             }
+             return;
+          }
+          
+          try {
+            await tursoClient.current.execute({
+              sql: "DELETE FROM turso_questions WHERE quiz = ? OR (quiz IS NULL AND ? = 'General')",
+              args: [activeQuiz, activeQuiz]
+            });
+            
+            if (activeQuiz === 'General') {
+               alert(`✅ Cuestionario "General" vaciado correctamente (todas las preguntas borradas). El cuestionario base siempre aparece, pero ahora está vacío.`);
+            } else {
+               alert(`✅ Cuestionario "${activeQuiz}" eliminado por completo.`);
+            }
+            
+            const newQuizzes = availableQuizzes.filter(q => q !== activeQuiz);
+            if (newQuizzes.length === 0) newQuizzes.push('General');
+            setAvailableQuizzes(newQuizzes);
+            const nextQuiz = newQuizzes[0];
+            await loadQuizFromDB(nextQuiz);
+          } catch(e) { alert("❌ Error: " + e.message); }
+        };
+
+        const handleSaveRowEdit = async (idx, newQ, newA) => {
+          const row = rawRows[idx];
+          if (!tursoClient.current) return;
+          try {
+            await tursoClient.current.execute({
+              sql: "UPDATE turso_questions SET question = ?, answer = ? WHERE id = ?",
+              args: [newQ, newA, row.id || (row.question + row.answer)]
+            });
+            const newRows = [...rawRows];
+            newRows[idx] = { ...row, question: newQ, answer: newA };
+            setRawRows(newRows);
+            setEditingRowIndex(null);
+          } catch(e) { alert("❌ Error: " + e.message); }
+        };
+
+        const handleDeleteRow = async (idx) => {
+          const row = rawRows[idx];
+          const c = window.confirm("¿Seguro que deseas eliminar esta pregunta?");
+          if (!c) return;
+          if (!tursoClient.current) return;
+          try {
+            await tursoClient.current.execute({
+              sql: "DELETE FROM turso_questions WHERE id = ?",
+              args: [row.id || (row.question + row.answer)]
+            });
+            const newRows = rawRows.filter((_, i) => i !== idx);
+            setRawRows(newRows);
+          } catch(e) { alert("❌ Error: " + e.message); }
+        };
 
         const totalQuestions = questions.length;
 
@@ -568,7 +868,7 @@
             switch (e.key) {
               case ' ':
               case 'Enter':
-                if (e.target.tagName !== 'BUTTON') {
+                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
                   e.preventDefault();
                   setRevealed(!isRevealed);
                 }
@@ -711,7 +1011,47 @@
                 return;
               }
 
-              setRawRows(parsed);
+              const currentQuiz = activeQuiz || 'General';
+              
+              // Detectar cuáles preguntas son REALMENTE NUEVAS basándose en la lista actual
+              const existingIds = new Set(rawRows.map(r => r.id || (r.question + r.answer)));
+              const newRows = parsed.filter(p => {
+                 const parsedId = currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer);
+                 return !existingIds.has(parsedId);
+              });
+
+              if (newRows.length === 0) {
+                 alert("ℹ️ El Excel no contenía preguntas nuevas para este cuestionario.");
+                 setLoadingFile(false);
+                 return;
+              }
+
+              // Agregar solo las nuevas a la interfaz local de inmediato
+              setRawRows(prev => [...prev, ...newRows.map(p => ({
+                 id: currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer),
+                 question: p.question,
+                 answer: p.answer
+              }))]);
+              
+              // Guardar en Turso si está conectado
+              if (tursoClient.current && tursoConnected) {
+                 const queries = newRows.map(p => ({
+                    sql: "INSERT OR IGNORE INTO turso_questions (id, question, answer, quiz) VALUES (?, ?, ?, ?)",
+                    args: [currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer), p.question, p.answer, currentQuiz]
+                 }));
+                 tursoClient.current.batch(queries).then(() => {
+                   alert(`✅ Se agregaron ${newRows.length} pregunta(s) nueva(s) al cuestionario '${currentQuiz}'.`);
+                   // Sincronizar confirmación desde la DB, manteniendo la sesión viva por si estaban en un módulo
+                   loadQuizFromDB(currentQuiz, false);
+                 }).catch(err => {
+                   console.error(err);
+                   setTursoError("Error subiendo datos: " + (err.message || err));
+                   alert("❌ Error subiendo a Turso: " + (err.message || err));
+                 });
+              } else {
+                 alert(`⚠️ Se guardaron ${newRows.length} pregunta(s) localmente, pero Turso NO estaba conectado.`);
+              }
+
               setCurrentIndex(0);
               setScore(0);
               setCorrectCount(0);
@@ -860,11 +1200,7 @@
             setGameMode(null);
             return;
           }
-          if (gameMode === 'module6') {
-            setShowRestartChoice(true);
-          } else {
-            startModule(gameMode, true);
-          }
+          setShowRestartChoice(true);
         }
 
         function handleReviewFailed() {
@@ -882,6 +1218,92 @@
           setFailedQuestions([]);
           setRevealed(false);
         }
+
+        const startModule = (mode, forceReset = false, filterMode = 'all') => {
+          if (mode !== 'module7' && rawRows.length === 0) {
+            alert(`No hay preguntas cargadas en el cuestionario activo ("${activeQuiz}"). Entra al Módulo 7 para gestionarlo.`);
+            return;
+          }
+          const oldGroup = getModuleGroup(prevMode);
+          const newGroup = getModuleGroup(mode);
+
+          if (mode === 'module4') {
+            toggleFullscreen(true);
+          }
+
+          // 1. Guardar progreso del grupo anterior si cambiamos de grupo
+          if (oldGroup && oldGroup !== newGroup) {
+            const session = { 
+              questions, 
+              currentIndex, 
+              score, 
+              correctCount, 
+              wrongCount, 
+              failedQuestions,
+              gameOver
+            };
+            localStorage.setItem(`cuestionario_session_${oldGroup}`, JSON.stringify(session));
+          }
+
+          // 2. Intentar restaurar progreso del nuevo grupo
+          let restored = false;
+          if (!forceReset && (oldGroup !== newGroup)) {
+            const saved = localStorage.getItem(`cuestionario_session_${newGroup}`);
+            if (saved) {
+              try {
+                const session = JSON.parse(saved);
+                if (session.questions && session.questions.length > 0) {
+                  setQuestions(session.questions);
+                  setCurrentIndex(session.currentIndex);
+                  setScore(session.score || 0);
+                  setCorrectCount(session.correctCount || 0);
+                  setWrongCount(session.wrongCount || 0);
+                  setFailedQuestions(session.failedQuestions || []);
+                  setGameOver(session.gameOver || false);
+                  restored = true;
+                }
+              } catch (e) { console.warn("Error restaurando sesión:", e); }
+            }
+          }
+
+          // 3. Lógica normal si no se restauró nada (o es el mismo grupo)
+          if (!restored) {
+            const shouldContinueInGroup = !forceReset && oldGroup === newGroup && questions.length > 0 && !gameOver;
+
+            if (!shouldContinueInGroup) {
+              let actualFilter = filterMode;
+              if (filterMode === false) actualFilter = 'pending';
+              if (filterMode === true) actualFilter = 'all';
+
+              let filteredRows = rawRows;
+              if (actualFilter === 'pending') {
+                filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
+                if (filteredRows.length === 0) {
+                   alert("¡Felicidades! No tienes preguntas pendientes. Repasaremos todas.");
+                   filteredRows = rawRows;
+                }
+              } else if (actualFilter === 'knownOnly') {
+                filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
+              }
+              const shuffled = shuffleArray(filteredRows);
+              setQuestions(shuffled);
+              setCurrentIndex(0);
+              setScore(0);
+              setCorrectCount(0);
+              setWrongCount(0);
+              setFailedQuestions([]);
+              setGameOver(false);
+            }
+          }
+
+          setGameStarted(true);
+          setGameMode(mode);
+          setPrevMode(mode); 
+          setSelectedOption(null);
+          setFeedback(null);
+          setRevealed(false);
+          setShowRestartChoice(false);
+        };
 
         const getFormattedTime = (timeValue) => {
           if (!timeValue) return "";
@@ -950,87 +1372,6 @@
           }
         }
 
-        function startModule(mode, forceReset = false, filterMode = 'all') {
-          const oldGroup = getModuleGroup(prevMode);
-          const newGroup = getModuleGroup(mode);
-
-          if (mode === 'module4') {
-            toggleFullscreen(true);
-          }
-
-          // 1. Guardar progreso del grupo anterior si cambiamos de grupo
-          if (oldGroup && oldGroup !== newGroup) {
-            const session = { 
-              questions, 
-              currentIndex, 
-              score, 
-              correctCount, 
-              wrongCount, 
-              failedQuestions,
-              gameOver
-            };
-            localStorage.setItem(`cuestionario_session_${oldGroup}`, JSON.stringify(session));
-          }
-
-          // 2. Intentar restaurar progreso del nuevo grupo
-          let restored = false;
-          if (!forceReset && (oldGroup !== newGroup)) {
-            const saved = localStorage.getItem(`cuestionario_session_${newGroup}`);
-            if (saved) {
-              try {
-                const session = JSON.parse(saved);
-                if (session.questions && session.questions.length > 0) {
-                  setQuestions(session.questions);
-                  setCurrentIndex(session.currentIndex);
-                  setScore(session.score || 0);
-                  setCorrectCount(session.correctCount || 0);
-                  setWrongCount(session.wrongCount || 0);
-                  setFailedQuestions(session.failedQuestions || []);
-                  setGameOver(session.gameOver || false);
-                  restored = true;
-                }
-              } catch (e) { console.warn("Error restaurando sesión:", e); }
-            }
-          }
-
-          // 3. Lógica normal si no se restauró nada (o es el mismo grupo)
-          if (!restored) {
-            const shouldContinueInGroup = !forceReset && oldGroup === newGroup && questions.length > 0 && !gameOver;
-
-            if (!shouldContinueInGroup) {
-              let actualFilter = filterMode;
-              if (filterMode === false) actualFilter = 'pending';
-              if (filterMode === true) actualFilter = 'all';
-
-              let filteredRows = rawRows;
-              if (mode === 'module6') {
-                if (actualFilter === 'pending') {
-                  filteredRows = rawRows.filter(row => !likedQuestions.includes(row.question + row.answer));
-                  if (filteredRows.length === 0) filteredRows = rawRows;
-                } else if (actualFilter === 'knownOnly') {
-                  filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
-                }
-              }
-              const shuffled = shuffleArray(filteredRows);
-              setQuestions(shuffled);
-              setCurrentIndex(0);
-              setScore(0);
-              setCorrectCount(0);
-              setWrongCount(0);
-              setFailedQuestions([]);
-              setGameOver(false);
-            }
-          }
-
-          setGameStarted(true);
-          setGameMode(mode);
-          setPrevMode(mode); 
-          setSelectedOption(null);
-          setFeedback(null);
-          setRevealed(false);
-          setShowRestartChoice(false);
-        }
-
         function handleChangeModule() {
           if (gameMode === 'module4') {
             toggleFullscreen(false);
@@ -1055,9 +1396,12 @@
 
         const toggleKnown = (question) => {
           const key = question.question + question.answer;
-          setLikedQuestions(prev => 
-            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-          );
+          setLikedQuestions(prev => {
+            const isLiked = prev.includes(key);
+            const next = isLiked ? prev.filter(k => k !== key) : [...prev, key];
+            syncToTurso(key, 'hearts', isLiked ? 0 : 1);
+            return next;
+          });
         };
 
         const toggleSave = (question) => {
@@ -1093,11 +1437,23 @@
           if (!currentComment.trim()) return;
           const key = question.question + question.answer;
           const newComment = { text: currentComment.trim(), time: Date.now() };
-          setComments(prev => ({
-            ...prev,
-            [key]: [...(prev[key] || []), newComment]
-          }));
+          setComments(prev => {
+            const nextComments = [...(prev[key] || []), newComment];
+            syncToTurso(key, 'comments', JSON.stringify(nextComments));
+            return { ...prev, [key]: nextComments };
+          });
           setCurrentComment("");
+        };
+
+        const deleteComment = (question, index) => {
+          if (!window.confirm("¿Seguro que deseas eliminar este comentario?")) return;
+          const key = question.question + question.answer;
+          setComments(prev => {
+             const nextComments = [...(prev[key] || [])];
+             nextComments.splice(index, 1);
+             syncToTurso(key, 'comments', JSON.stringify(nextComments));
+             return { ...prev, [key]: nextComments };
+          });
         };
 
         const handleTouchStart = (e) => {
@@ -1149,6 +1505,32 @@
             <div className="floating-orb orb-1" />
             <div className="floating-orb orb-2" />
             <div className="app-container">
+              {showTursoConfig && (
+                <div className="overlay-message" style={{ zIndex: 9999 }}>
+                  <div className="overlay-card" style={{ background: '#222', color: '#fff', textAlign: 'left', minWidth: '300px' }}>
+                    <h3 style={{marginTop:0}}>Gestión Turso DB</h3>
+                    <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
+                      <label style={{fontSize:'0.9rem', marginBottom:'4px'}}>Database URL:</label>
+                      <input type="text" value={tursoUrl} onChange={e => { setTursoUrl(e.target.value); localStorage.setItem('turso_url', e.target.value); }} style={{ padding: '8px', borderRadius:'6px', border:'1px solid #444', background:'#333', color:'#fff' }}/>
+                    </div>
+                    <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
+                      <label style={{fontSize:'0.9rem', marginBottom:'4px'}}>Auth Token:</label>
+                      <input type="password" value={tursoToken} onChange={e => { setTursoToken(e.target.value); localStorage.setItem('turso_token', e.target.value); }} style={{ padding: '8px', borderRadius:'6px', border:'1px solid #444', background:'#333', color:'#fff' }}/>
+                    </div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'15px'}}>
+                      <button onClick={() => setShowTursoConfig(false)} style={{ padding: '8px 16px', borderRadius:'8px', background: '#555', color:'#fff', border:'none', cursor:'pointer' }}>Cerrar</button>
+                      <div style={{ textAlign: 'right' }}>
+                        {tursoConnected ? <span style={{ color: '#4ade80', fontWeight:'bold' }}>✅ Conectado</span> : <span style={{ color: '#f87171', fontWeight:'bold' }}>❌ Desconectado</span>}
+                      </div>
+                    </div>
+                    {tursoError && (
+                      <div style={{ marginTop: '10px', fontSize: '0.8rem', color: '#fca5a5', background: '#450a0a', padding: '8px', borderRadius: '4px' }}>
+                        {String(tursoError)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {(gameMode !== 'module3' && gameMode !== 'module4') && (
                 <header className="app-header">
                   <h1>Cuestionario App</h1>
@@ -1158,26 +1540,7 @@
                 </header>
               )}
 
-              <section className="top-bar" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
-                {rawRows.length === 0 && (
-                  <div className="file-input-wrapper">
-                    <label className="file-label">
-                      <span>📁 Cargar archivo Excel</span>
-                      <input
-                        type="file"
-                        accept=".xlsx,.xls"
-                        onChange={handleFileChange}
-                      />
-                    </label>
-                    <p className="file-help">
-                      Columna 1: pregunta · Columna 2: respuesta correcta
-                    </p>
-                  </div>
-                )}
-
-              </section>
-
-              {gameStarted && !gameOver && gameMode !== 'module3' && gameMode !== 'module4' && (
+              {gameStarted && !gameOver && gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module7' && (
                 <section className="progress-bar-wrapper">
                   <div className="progress-bar">
                     <div
@@ -1188,7 +1551,7 @@
                 </section>
               )}
 
-              {rawRows.length === 0 && (
+              {rawRows.length === 0 && !gameStarted && (
                 <section className="welcome-card">
                   <h2>Sube tu archivo para empezar</h2>
                   <p>
@@ -1199,13 +1562,18 @@
                 </section>
               )}
 
-              {rawRows.length > 0 && !gameStarted && !gameOver && (
+              {!gameStarted && !gameOver && (
                 <section className="hub-screen">
-                  <h2>¿Qué módulo quieres practicar?</h2>
+                  <h2>¿Qué módulo quieres abrir?</h2>
                   <p className="hub-subtitle">
-                    {rawRows.length} pregunta{rawRows.length !== 1 ? 's' : ''} cargada{rawRows.length !== 1 ? 's' : ''}
+                    Has seleccionado "{activeQuiz}" ({rawRows.length} pregunta{rawRows.length !== 1 ? 's' : ''})
                   </p>
                   <div className="hub-buttons">
+                    <button className="hub-btn" onClick={() => startModule('module7')}>
+                      <span className="hub-icon">📚</span>
+                      <span className="hub-title">Gestión de Cuestionarios</span>
+                      <span className="hub-desc">Crear y Subir Archivos</span>
+                    </button>
                     <button className="hub-btn" onClick={() => startModule('quiz')}>
                       <span className="hub-icon">🎯</span>
                       <span className="hub-title">Módulo 1</span>
@@ -1232,8 +1600,8 @@
                       <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
                     </button>
                   </div>
-                  <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', borderColor: '#ef4444' }}>
-                    🗑️ Borrar memoria y empezar de cero
+                  <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', border: '1px solid #ef4444' }}>
+                    🗑️ Borrar memoria guardada
                   </button>
                 </section>
               )}
@@ -1242,9 +1610,137 @@
                 <div className="overlay-message">
                   <div className="overlay-card">
                     <div className="spinner" />
-                    <p>Leyendo archivo Excel...</p>
+                    <p>Leyendo archivo Excel y subiendo a Turso...</p>
                   </div>
                 </div>
+              )}
+
+              {gameStarted && !gameOver && gameMode === 'module7' && (
+                <main className="module7-area" style={{ padding: '20px', maxWidth: '600px', margin: '40px auto 0 auto', color: '#1f2937', textAlign: 'center', background: '#f9fafb', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+                  <h2 style={{ color: '#111827', marginTop: 0 }}>Gestión de Cuestionarios</h2>
+                  <p style={{marginBottom: '20px', color: '#4b5563'}}>Selecciona un cuestionario activo, o crea uno nuevo para organizarte.</p>
+
+                  <div style={{ background: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+                      <label style={{fontWeight: 'bold', color: '#059669'}}>1. Seleccionar o Editar Cuestionario:</label>
+                      
+                      <div style={{display:'flex', gap:'10px', width:'100%'}}>
+                        <select 
+                          value={activeQuiz} 
+                          onChange={e => loadQuizFromDB(e.target.value)}
+                          style={{ flex: 1, padding: '12px', borderRadius: '8px', background: '#f0fdf4', color: '#065f46', border: '1px solid #10b981', fontSize: '1.1rem', fontWeight: 'bold' }}
+                        >
+                          {availableQuizzes.map(q => <option key={q} value={q}>{q}</option>)}
+                        </select>
+                        <button onClick={handleDeleteQuizAction} style={{background:'#fee2e2', color:'#b91c1c', border:'1px solid #f87171', borderRadius:'8px', padding:'0 15px', cursor:'pointer', fontWeight:'bold', fontSize:'1.1rem'}} title="Eliminar todo el cuestionario">🗑️</button>
+                      </div>
+
+                      <div style={{display:'flex', gap:'10px', width:'100%', marginTop:'5px'}}>
+                        <input 
+                           type="text"
+                           placeholder={`Renombrar "${activeQuiz}" a...`}
+                           value={renameQuizValue}
+                           onChange={e => setRenameQuizValue(e.target.value)}
+                           style={{flex:1, padding:'8px', borderRadius:'6px', background:'#f3f4f6', color:'#111827', border:'1px solid #d1d5db'}}
+                        />
+                        <button onClick={handleRenameQuizAction} className="hub-btn" style={{margin:0, padding:'8px 16px', fontSize:'0.9rem'}}>Renombrar</button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+                      <label style={{fontWeight: 'bold', color: '#1f2937'}}>✨ Crear Nuevo Cuestionario:</label>
+                      <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                        <input 
+                          type="text" 
+                          placeholder="Nombre (ej. Matemáticas).." 
+                          value={newQuizName} 
+                          onChange={e => setNewQuizName(e.target.value)}
+                          style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#f3f4f6', color: '#111827', border: '1px solid #d1d5db' }}
+                        />
+                        <button onClick={() => { if(newQuizName) { loadQuizFromDB(newQuizName); setNewQuizName(''); } }} className="hub-btn" style={{ padding: '0 20px', margin: 0, fontSize: '0.9rem' }}>Ir / Crear</button>
+                      </div>
+                    </div>
+
+                    <hr style={{ borderColor: '#e5e7eb', width: '100%', margin: '10px 0' }} />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+                      <label style={{fontWeight: 'bold', color: '#1f2937'}}>2. Agregar Excel al cuestionario "{activeQuiz}":</label>
+                      <div className="file-input-wrapper" style={{ width: '100%', marginTop: '5px' }}>
+                        <label className="file-label" style={{ padding: '15px', fontSize: '1rem', width: '100%', boxSizing: 'border-box', background: '#3b82f6', border: 'none', color: '#fff' }}>
+                          <span>➕ Subir Excel de Preguntas</span>
+                          <input
+                            type="file"
+                            accept=".xlsx,.xls"
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                        <p className="file-help" style={{textAlign: 'center', marginTop:'10px', fontSize: '0.8rem', color: '#4b5563'}}>Columna 1: Pregunta · Columna 2: Respuesta</p>
+                      </div>
+                    </div>
+
+                    <hr style={{ borderColor: '#e5e7eb', width: '100%', margin: '10px 0' }} />
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
+                      <label style={{fontWeight: 'bold', display: 'flex', justifyContent: 'space-between', width: '100%', color: '#1f2937'}}>
+                        <span>3. Lista de Preguntas ({rawRows.length})</span>
+                      </label>
+                      
+                      <div style={{ width: '100%', maxHeight: '400px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px', background: '#f9fafb', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {rawRows.length === 0 ? (
+                           <p style={{color:'#6b7280', textAlign:'center', margin:'20px 0'}}>No hay preguntas en este cuestionario.</p>
+                        ) : rawRows.map((row, idx) => (
+                           <div key={idx} style={{ background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'left', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                             {editingRowIndex === idx ? (
+                               <>
+                                 <textarea 
+                                   value={editQ} 
+                                   onChange={e => setEditQ(e.target.value)} 
+                                   style={{width:'100%', padding:'8px', borderRadius:'4px', background:'#f3f4f6', color:'#111827', border:'1px solid #d1d5db', resize:'vertical', fontFamily:'inherit'}}
+                                   rows={2}
+                                 />
+                                 <textarea 
+                                   value={editA} 
+                                   onChange={e => setEditA(e.target.value)} 
+                                   style={{width:'100%', padding:'8px', borderRadius:'4px', background:'#f3f4f6', color:'#111827', border:'1px solid #d1d5db', resize:'vertical', fontFamily:'inherit'}}
+                                   rows={2}
+                                 />
+                                 <div style={{display:'flex', gap:'10px', justifyContent:'flex-end'}}>
+                                   <button onClick={() => setEditingRowIndex(null)} style={{padding:'6px 12px', borderRadius:'4px', background:'#e5e7eb', border:'none', color:'#4b5563', cursor:'pointer', fontWeight:'bold'}}>Cancelar</button>
+                                   <button onClick={() => handleSaveRowEdit(idx, editQ, editA)} style={{padding:'6px 12px', borderRadius:'4px', background:'#10b981', border:'none', color:'#fff', cursor:'pointer', fontWeight:'bold'}}>Guardar</button>
+                                 </div>
+                               </>
+                             ) : (
+                               <>
+                                 <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'10px'}}>
+                                   <div style={{flex:1}}>
+                                     <strong style={{color:'#2563eb'}}>P:</strong> <span style={{color:'#1f2937'}}>{row.question}</span>
+                                   </div>
+                                   <div style={{display:'flex', gap:'5px', marginTop:'-5px'}}>
+                                     <button onClick={() => { setEditingRowIndex(idx); setEditQ(row.question); setEditA(row.answer); }} style={{background:'transparent', border:'none', cursor:'pointer', fontSize:'1.2rem'}} title="Editar">✏️</button>
+                                     <button onClick={() => handleDeleteRow(idx)} style={{background:'transparent', border:'none', cursor:'pointer', fontSize:'1.2rem'}} title="Eliminar">🗑️</button>
+                                   </div>
+                                 </div>
+                                 <div>
+                                  <strong style={{color:'#db2777'}}>R:</strong> <span style={{color:'#1f2937'}}>{row.answer}</span>
+                                 </div>
+                               </>
+                             )}
+                           </div>
+                        ))}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <button 
+                    className="hub-btn" 
+                    onClick={handleChangeModule} 
+                    style={{ marginTop: '30px', background: '#555', color: '#fff', width: '100%' }}
+                  >
+                    Volver al Menú Principal
+                  </button>
+                </main>
               )}
 
               {gameStarted && !gameOver && gameMode === 'module3' && currentQuestion && (
@@ -1435,10 +1931,11 @@
                         onClick={() => {
                           if (!revealed) {
                             const key = currentQuestion.question + currentQuestion.answer;
-                            setViewCounts(prev => ({
-                              ...prev,
-                              [key]: (prev[key] || 0) + 1
-                            }));
+                            setViewCounts(prev => {
+                              const nextVal = (prev[key] || 0) + 1;
+                              syncToTurso(key, 'views', nextVal);
+                              return { ...prev, [key]: nextVal };
+                            });
                           }
                           setRevealed(!revealed);
                         }}
@@ -1453,7 +1950,7 @@
                       {showBigHeart && (
                         <div className="m6-heart-animation">❤️</div>
                       )}
-                      
+
                       <div className={`m6-image-answer-overlay ${revealed ? 'm6-visible' : ''}`}>
                         <div className="m6-overlay-answer-box">
                           {currentQuestion.answer}
@@ -1461,302 +1958,318 @@
                       </div>
                     </div>
 
-                    <div className="m6-content-section">
-                      <div className="m6-interactions">
-                        <div className="m6-interaction-group">
-                          <span 
-                            className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
-                            title={likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? "Ya me la sé" : "Marcar como conocida"}
-                          >
-                            {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
-                          </span>
-                        </div>
+        <div className="m6-content-section">
+          <div className="m6-interactions">
+            <div className="m6-interaction-group">
+              <span
+                className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
+                onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
+                title={likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? "Ya me la sé" : "Marcar como conocida"}
+              >
+                {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
+              </span>
+            </div>
 
-                        <div className="m6-interaction-group">
-                          <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
-                            {showComments ? '💬' : '🗨️'}
-                          </span>
-                          <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
-                        </div>
+            <div className="m6-interaction-group">
+              <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
+                {showComments ? '💬' : '🗨️'}
+              </span>
+              <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
+            </div>
 
 
 
-                        <div className="m6-interaction-group">
-                          <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
-                          <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
+            <div className="m6-interaction-group">
+              <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
+              <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
+            </div>
+          </div>
+
+          <div className="m6-text-content">
+            <p className="m6-question-text">
+              <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
+            </p>
+
+            {showComments && (
+              <div className="m6-comments-container m6-fade-in">
+                <div className="m6-comments-list">
+                  {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
+                    <div key={i} className="m6-comment">
+                      <div className="m6-comment-top">
+                        <span className="m6-username-inline">josued.sanchez</span>
+                        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                          <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
+                          <button onClick={(e) => { e.stopPropagation(); deleteComment(currentQuestion, i); }} style={{background:'transparent', border:'none', color:'#ef4444', cursor:'pointer', padding:0, fontSize:'0.8rem'}} title="Eliminar comentario">✖</button>
                         </div>
                       </div>
-                      
-                      <div className="m6-text-content">
-                        <p className="m6-question-text">
-                          <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
-                        </p>
-                        
-                        {showComments && (
-                          <div className="m6-comments-container m6-fade-in">
-                            <div className="m6-comments-list">
-                              {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
-                                <div key={i} className="m6-comment">
-                                  <div className="m6-comment-top">
-                                    <span className="m6-username-inline">josued.sanchez</span>
-                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
-                                  </div>
-                                  <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
-                                </div>
-                              ))}
-                              {!(comments[currentQuestion.question + currentQuestion.answer] || []).length && (
-                                <p className="m6-no-comments">No hay comentarios aún.</p>
-                              )}
-                            </div>
-                            <div className="m6-add-comment">
-                              <input 
-                                type="text" 
-                                placeholder="Añade un comentario..." 
-                                value={currentComment}
-                                onChange={(e) => setCurrentComment(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
-                              />
-                              <button 
-                                onClick={() => addComment(currentQuestion)}
-                                disabled={!currentComment.trim()}
-                              >
-                                Publicar
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                      </div>
-
-                      <div className="m6-footer">
-                        <button 
-                          className="m6-nav-btn" 
-                          onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
-                          disabled={currentIndex === 0}
-                        >
-                          Anterior
-                        </button>
-                        <button 
-                          className="m6-nav-btn m6-next-btn" 
-                          onClick={() => { setRevealed(false); goToNextQuestion(); }}
-                        >
-                          {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
-                        </button>
-                      </div>
+                      <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
                     </div>
-                  </div>
-                </main>
-              )}
-
-
-              {gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
-                <main className="game-area">
-                  <div className="question-card question-enter">
-                    <div className="question-label">Pregunta</div>
-                    <div className="question-text">{currentQuestion.question}</div>
-                  </div>
-
-                  <div className="options-container">
-                    {options.map((opt, idx) => {
-                      const isSelected =
-                        selectedOption && selectedOption.text === opt.text;
-                      const isEliminated = disabledOptions.includes(opt.text);
-                      const labels = ["A", "B", "C", "D"];
-
-                      let className = "option-button";
-                      if (isEliminated) {
-                        className += " option-eliminated";
-                      } else if (isSelected && feedback?.type === "correct") {
-                        className += " option-correct option-pulse";
-                      } else if (isSelected && feedback?.type === "wrong") {
-                        className += " option-wrong option-shake";
-                      }
-
-                      return (
-                        <button
-                          key={idx}
-                          className={className}
-                          onClick={() => handleOptionClick(opt)}
-                          disabled={!!selectedOption || isEliminated}
-                        >
-                          <span className="option-label">{labels[idx]}</span>
-                          {opt.text}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {feedback && (
-                    <div
-                      className={
-                        feedback.type === "correct"
-                          ? "feedback feedback-correct"
-                          : "feedback feedback-wrong"
-                      }
-                    >
-                      {feedback.message}
-                    </div>
+                  ))}
+                  {!(comments[currentQuestion.question + currentQuestion.answer] || []).length && (
+                    <p className="m6-no-comments">No hay comentarios aún.</p>
                   )}
-                </main>
-              )}
-
-              {gameStarted && !gameOver && gameMode === 'quiz' && (
-                <div className="stats">
-                  <div className="stat-item">
-                    <span className="stat-label">Puntaje</span>
-                    <span className="stat-value">{score}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Aciertos</span>
-                    <span className="stat-value stat-ok">{correctCount}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Errores</span>
-                    <span className="stat-value stat-bad">{wrongCount}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Progreso</span>
-                    <span className="stat-value">
-                      {totalQuestions ? `${currentIndex + 1} / ${totalQuestions}` : "-"}
-                    </span>
-                  </div>
                 </div>
-              )}
-
-
-              {confirm && (
-                <div className="confirm-overlay">
-                  <div className="confirm-card">
-                    <p className="confirm-message">{confirm.message}</p>
-                    <div className="confirm-actions">
-                      <button className="confirm-cancel" onClick={closeConfirm}>Cancelar</button>
-                      <button className="confirm-accept" onClick={() => { confirm.onAccept(); closeConfirm(); }}>Aceptar</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {gameOver && (
-                <section className="results-card">
-                  {gameMode === 'quiz' ? (
-                    <>
-                      <h2>Resultados finales</h2>
-                      <div className="results-grid">
-                        <div className="result-item">
-                          <span className="result-label">Total de preguntas</span>
-                          <span className="result-value">{totalQuestions}</span>
-                        </div>
-                        <div className="result-item">
-                          <span className="result-label">Aciertos</span>
-                          <span className="result-value stat-ok">{correctCount}</span>
-                        </div>
-                        <div className="result-item">
-                          <span className="result-label">Errores</span>
-                          <span className="result-value stat-bad">{wrongCount}</span>
-                        </div>
-                        <div className="result-item">
-                          <span className="result-label">Porcentaje de éxito</span>
-                          <span className="result-value">
-                            {successPercentage}<span className="result-unit">%</span>
-                          </span>
-                        </div>
-                        <div className="result-item">
-                          <span className="result-label">Puntaje final</span>
-                          <span className="result-value">{score}</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <h2>¡Ronda completada!</h2>
-                      <div className="results-grid">
-                        <div className="result-item">
-                          <span className="result-label">Tarjetas revisadas</span>
-                          <span className="result-value">{totalQuestions}</span>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                  <div className="results-actions">
-                    <button className="restart-button" onClick={handleRestart}>
-                      🔁 {(gameMode === 'module6') ? 'Modo de repaso' : 'Repetir ronda'}
-                    </button>
-                    <button className="change-module-btn" onClick={handleChangeModule}>
-                      🔀 Cambiar módulo
-                    </button>
-                    {gameMode === 'quiz' && failedQuestions.length > 0 && (
-                      <button className="review-button" onClick={handleReviewFailed}>
-                        🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
-                      </button>
-                    )}
-                  </div>
-                </section>
-              )}
-
-              {gameStarted && !gameOver && gameMode === 'quiz' && (
-                <div className="bottom-actions">
-                  <button className="ghost-button" onClick={handleRestart}>
-                    Reiniciar ronda
-                  </button>
-                  <button className="ghost-button" onClick={handleChangeModule}>
-                    🔀 Cambiar módulo
+                <div className="m6-add-comment">
+                  <input
+                    type="text"
+                    placeholder="Añade un comentario..."
+                    value={currentComment}
+                    onChange={(e) => setCurrentComment(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
+                  />
+                  <button
+                    onClick={() => addComment(currentQuestion)}
+                    disabled={!currentComment.trim()}
+                  >
+                    Publicar
                   </button>
                 </div>
-              )}
+              </div>
+            )}
 
-              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
-                <span>
-                  Carga tu Excel y convierte el estudio en un juego interactivo.
-                </span>
-              </footer>
+          </div>
 
-              {showRestartChoice && (
-                <div className="m6-restart-overlay m6-fade-in">
-                  <div className="m6-restart-modal">
-                    <h3>Modo de Repaso</h3>
-                    <p>¿Qué preguntas deseas incluir?</p>
-                    <div className="m6-restart-options">
-                              <button 
-                                className="m6-choice-btn m6-primary" 
-                                onClick={() => startModule(gameMode, true, 'pending')}
-                              >
-                                🎯 Solo pendientes 
-                                <small>({rawRows.length - likedQuestions.length} restantes)</small>
-                              </button>
-                              <button 
-                                className="m6-choice-btn m6-success" 
-                                onClick={() => startModule(gameMode, true, 'knownOnly')}
-                                disabled={likedQuestions.length === 0}
-                              >
-                                ❤️ Solo conocidas
-                                <small>({likedQuestions.length} preguntas)</small>
-                              </button>
-                              <button 
-                                className="m6-choice-btn m6-secondary" 
-                                onClick={() => startModule(gameMode, true, 'all')}
-                              >
-                                🔄 Repasar todo
-                                <small>({rawRows.length} preguntas)</small>
-                              </button>
-                              <button 
-                                className="m6-choice-btn m6-cancel" 
-                                onClick={() => setShowRestartChoice(false)}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                  </div>
+          <div className="m6-footer">
+            <button
+              className="m6-nav-btn"
+              onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
+              disabled={currentIndex === 0}
+            >
+              Anterior
+            </button>
+            <button
+              className="m6-nav-btn m6-next-btn"
+              onClick={() => { setRevealed(false); goToNextQuestion(); }}
+            >
+              {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
+            </button>
+          </div>
+        </div>
+                  </div >
+                </main >
+              )
+    }
+
+
+    {
+      gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
+        <main className="game-area">
+          <div className="question-card question-enter">
+            <div className="question-label">Pregunta</div>
+            <div className="question-text">{currentQuestion.question}</div>
+          </div>
+
+          <div className="options-container">
+            {options.map((opt, idx) => {
+              const isSelected =
+                selectedOption && selectedOption.text === opt.text;
+              const isEliminated = disabledOptions.includes(opt.text);
+              const labels = ["A", "B", "C", "D"];
+
+              let className = "option-button";
+              if (isEliminated) {
+                className += " option-eliminated";
+              } else if (isSelected && feedback?.type === "correct") {
+                className += " option-correct option-pulse";
+              } else if (isSelected && feedback?.type === "wrong") {
+                className += " option-wrong option-shake";
+              }
+
+              return (
+                <button
+                  key={idx}
+                  className={className}
+                  onClick={() => handleOptionClick(opt)}
+                  disabled={!!selectedOption || isEliminated}
+                >
+                  <span className="option-label">{labels[idx]}</span>
+                  {opt.text}
+                </button>
+              );
+            })}
+          </div>
+
+          {feedback && (
+            <div
+              className={
+                feedback.type === "correct"
+                  ? "feedback feedback-correct"
+                  : "feedback feedback-wrong"
+              }
+            >
+              {feedback.message}
+            </div>
+          )}
+        </main>
+      )
+    }
+
+    {
+      gameStarted && !gameOver && gameMode === 'quiz' && (
+        <div className="stats">
+          <div className="stat-item">
+            <span className="stat-label">Puntaje</span>
+            <span className="stat-value">{score}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Aciertos</span>
+            <span className="stat-value stat-ok">{correctCount}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Errores</span>
+            <span className="stat-value stat-bad">{wrongCount}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Progreso</span>
+            <span className="stat-value">
+              {totalQuestions ? `${currentIndex + 1} / ${totalQuestions}` : "-"}
+            </span>
+          </div>
+        </div>
+      )
+    }
+
+
+    {
+      confirm && (
+        <div className="confirm-overlay">
+          <div className="confirm-card">
+            <p className="confirm-message">{confirm.message}</p>
+            <div className="confirm-actions">
+              <button className="confirm-cancel" onClick={closeConfirm}>Cancelar</button>
+              <button className="confirm-accept" onClick={() => { confirm.onAccept(); closeConfirm(); }}>Aceptar</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    {
+      gameOver && (
+        <section className="results-card">
+          {gameMode === 'quiz' ? (
+            <>
+              <h2>Resultados finales</h2>
+              <div className="results-grid">
+                <div className="result-item">
+                  <span className="result-label">Total de preguntas</span>
+                  <span className="result-value">{totalQuestions}</span>
                 </div>
-              )}
+                <div className="result-item">
+                  <span className="result-label">Aciertos</span>
+                  <span className="result-value stat-ok">{correctCount}</span>
+                </div>
+                <div className="result-item">
+                  <span className="result-label">Errores</span>
+                  <span className="result-value stat-bad">{wrongCount}</span>
+                </div>
+                <div className="result-item">
+                  <span className="result-label">Porcentaje de éxito</span>
+                  <span className="result-value">
+                    {successPercentage}<span className="result-unit">%</span>
+                  </span>
+                </div>
+                <div className="result-item">
+                  <span className="result-label">Puntaje final</span>
+                  <span className="result-value">{score}</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2>¡Ronda completada!</h2>
+              <div className="results-grid">
+                <div className="result-item">
+                  <span className="result-label">Tarjetas revisadas</span>
+                  <span className="result-value">{totalQuestions}</span>
+                </div>
+              </div>
+            </>
+          )}
+          <div className="results-actions">
+            <button className="restart-button" onClick={handleRestart}>
+              🔁 Modo de repaso
+            </button>
+            <button className="change-module-btn" onClick={handleChangeModule}>
+              🔀 Cambiar módulo
+            </button>
+            {gameMode === 'quiz' && failedQuestions.length > 0 && (
+              <button className="review-button" onClick={handleReviewFailed}>
+                🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
+              </button>
+            )}
+          </div>
+        </section>
+      )
+    }
+
+    {
+      gameStarted && !gameOver && gameMode === 'quiz' && (
+        <div className="bottom-actions">
+          <button className="ghost-button" onClick={handleRestart}>
+            Reiniciar ronda
+          </button>
+          <button className="ghost-button" onClick={handleChangeModule}>
+            🔀 Cambiar módulo
+          </button>
+        </div>
+      )
+    }
+
+    <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
+      <span>
+        Carga tu Excel y convierte el estudio en un juego interactivo.
+      </span>
+    </footer>
+
+    {
+      showRestartChoice && (
+        <div className="m6-restart-overlay m6-fade-in">
+          <div className="m6-restart-modal">
+            <h3>Modo de Repaso</h3>
+            <p>¿Qué preguntas deseas incluir?</p>
+            <div className="m6-restart-options">
+              <button
+                className="m6-choice-btn m6-primary"
+                onClick={() => startModule(gameMode, true, 'pending')}
+              >
+                🎯 Solo pendientes
+                <small>({rawRows.length - likedQuestions.length} restantes)</small>
+              </button>
+              <button
+                className="m6-choice-btn m6-success"
+                onClick={() => startModule(gameMode, true, 'knownOnly')}
+                disabled={likedQuestions.length === 0}
+              >
+                ❤️ Solo conocidas
+                <small>({likedQuestions.length} preguntas)</small>
+              </button>
+              <button
+                className="m6-choice-btn m6-secondary"
+                onClick={() => startModule(gameMode, true, 'all')}
+              >
+                🔄 Repasar todo
+                <small>({rawRows.length} preguntas)</small>
+              </button>
+              <button
+                className="m6-choice-btn m6-cancel"
+                onClick={() => setShowRestartChoice(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
             </div>
           </div>
         );
       }
 
-      const root = ReactDOM.createRoot(document.getElementById("root"));
-      root.render(<App />);
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
     }
   </script>
 </body>
