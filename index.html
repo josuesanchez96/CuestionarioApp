@@ -359,7 +359,10 @@
         const loadQuizFromDB = async (quizName, clearSession = true) => {
            setActiveQuiz(quizName);
            localStorage.setItem('cuestionario_active_quiz', quizName);
-           setAvailableQuizzes(prev => prev.includes(quizName) ? prev : [...prev, quizName]);
+           setAvailableQuizzes(prev => {
+             const others = prev.filter(q => q !== quizName);
+             return [quizName, ...others];
+           });
            
            // Evitar que la memoria de otro cuestionario se cuele (forzar reseteo)
            if (clearSession) {
@@ -437,11 +440,15 @@
                   try {
                     await tursoClient.current.execute("ALTER TABLE turso_questions ADD COLUMN quiz TEXT DEFAULT 'General'");
                   } catch(e) {}
+
+                  try {
+                    await tursoClient.current.execute("ALTER TABLE turso_questions ADD COLUMN updated_at INTEGER DEFAULT 0");
+                  } catch(e) {}
                   
                   setTursoConnected(true);
                   setTursoError(''); 
                   
-                  const res = await tursoClient.current.execute("SELECT DISTINCT quiz FROM turso_questions WHERE quiz IS NOT NULL");
+                  const res = await tursoClient.current.execute("SELECT quiz FROM turso_questions WHERE quiz IS NOT NULL GROUP BY quiz ORDER BY MAX(updated_at) DESC");
                   const quizzes = (res.rows || []).map(r => r.quiz || r[0]).filter(Boolean);
                   if (!quizzes.includes('General')) quizzes.unshift('General');
                   setAvailableQuizzes(quizzes);
@@ -480,7 +487,7 @@
           if (!tursoClient.current || !renameQuizValue.trim() || renameQuizValue.trim() === activeQuiz) return;
           try {
             await tursoClient.current.execute({
-              sql: "UPDATE turso_questions SET quiz = ? WHERE quiz = ? OR (quiz IS NULL AND ? = 'General')",
+              sql: "UPDATE turso_questions SET quiz = ?, updated_at = (cast(strftime('%s','now') as int)) WHERE quiz = ? OR (quiz IS NULL AND ? = 'General')",
               args: [renameQuizValue.trim(), activeQuiz, activeQuiz]
             });
             alert(`✅ Cuestionario renombrado a "${renameQuizValue.trim()}"`);
@@ -489,7 +496,8 @@
                 const arr = [...prev];
                 const idx = arr.indexOf(activeQuiz);
                 if(idx !== -1) arr[idx] = newVal;
-                return arr;
+                const others = arr.filter(q => q !== newVal);
+                return [newVal, ...others];
             });
             setActiveQuiz(newVal);
             localStorage.setItem('cuestionario_active_quiz', newVal);
@@ -533,12 +541,17 @@
           if (!tursoClient.current) return;
           try {
             await tursoClient.current.execute({
-              sql: "UPDATE turso_questions SET question = ?, answer = ? WHERE id = ?",
+              sql: "UPDATE turso_questions SET question = ?, answer = ?, updated_at = (cast(strftime('%s','now') as int)) WHERE id = ?",
               args: [newQ, newA, row.id || (row.question + row.answer)]
             });
             const newRows = [...rawRows];
             newRows[idx] = { ...row, question: newQ, answer: newA };
             setRawRows(newRows);
+            
+            setAvailableQuizzes(prev => {
+               const others = prev.filter(q => q !== activeQuiz);
+               return [activeQuiz, ...others];
+            });
             setEditingRowIndex(null);
           } catch(e) { alert("❌ Error: " + e.message); }
         };
@@ -950,30 +963,7 @@
           }
         }, [gameOver]);
 
-        const handleRemoveData = () => {
-          if (window.confirm('¿Estás seguro de que deseas borrar los datos guardados y empezar de cero?')) {
-            localStorage.clear();
-            setRawRows([]);
-            setQuestions([]);
-            setGameStarted(false);
-            setGameOver(false);
-            setGameMode(null);
-            setCurrentIndex(0);
-            setScore(0);
-            setCorrectCount(0);
-            setWrongCount(0);
-            setDisabledOptions([]);
-            setFailedQuestions([]);
-            setLikedQuestions([]);
-            setSavedQuestions([]);
-            setComments({});
-            setImageSeeds({});
-            setRocketClicks({});
-            setViewCounts({});
-            setRevealed(false);
-            setLoadingFile(false);
-          }
-        };
+
 
         function handleFileChange(e) {
           const file = e.target.files?.[0];
@@ -1014,10 +1004,9 @@
               const currentQuiz = activeQuiz || 'General';
               
               // Detectar cuáles preguntas son REALMENTE NUEVAS basándose en la lista actual
-              const existingIds = new Set(rawRows.map(r => r.id || (r.question + r.answer)));
+              const existingContent = new Set(rawRows.map(r => (r.question || "").trim() + "|||" + (r.answer || "").trim()));
               const newRows = parsed.filter(p => {
-                 const parsedId = currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer);
-                 return !existingIds.has(parsedId);
+                 return !existingContent.has(p.question + "|||" + p.answer);
               });
 
               if (newRows.length === 0) {
@@ -1036,10 +1025,14 @@
               // Guardar en Turso si está conectado
               if (tursoClient.current && tursoConnected) {
                  const queries = newRows.map(p => ({
-                    sql: "INSERT OR IGNORE INTO turso_questions (id, question, answer, quiz) VALUES (?, ?, ?, ?)",
+                    sql: "INSERT OR IGNORE INTO turso_questions (id, question, answer, quiz, updated_at) VALUES (?, ?, ?, ?, (cast(strftime('%s','now') as int)))",
                     args: [currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer), p.question, p.answer, currentQuiz]
                  }));
                  tursoClient.current.batch(queries).then(() => {
+                   setAvailableQuizzes(prev => {
+                     const others = prev.filter(q => q !== currentQuiz);
+                     return [currentQuiz, ...others];
+                   });
                    alert(`✅ Se agregaron ${newRows.length} pregunta(s) nueva(s) al cuestionario '${currentQuiz}'.`);
                    // Sincronizar confirmación desde la DB, manteniendo la sesión viva por si estaban en un módulo
                    loadQuizFromDB(currentQuiz, false);
@@ -1600,9 +1593,7 @@
                       <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
                     </button>
                   </div>
-                  <button className="ghost-button" onClick={handleRemoveData} style={{ marginTop: '2rem', color: '#ef4444', border: '1px solid #ef4444' }}>
-                    🗑️ Borrar memoria guardada
-                  </button>
+
                 </section>
               )}
 
