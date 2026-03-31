@@ -2494,3 +2494,69 @@ body:has(.module4-area) {
     display: none; /* Ocultamos la descripción en móvil para optimizar espacio */
   }
 }
+
+/* ── Estilos para el selector de cuestionarios del HUB ──────────────── */
+.hub-quiz-selector {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap; /* Permitir que se ajusten en pantallas medianas */
+}
+
+.hub-quiz-selector label {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #4b5563;
+}
+
+.hub-quiz-selector select {
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.hub-quiz-selector select:hover {
+  background: #f0f7ff;
+}
+
+.hub-quiz-selector p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+@media (max-width: 550px) {
+  .hub-quiz-selector {
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 25px;
+  }
+  
+  .hub-quiz-selector label {
+    font-size: 0.9rem;
+  }
+  
+  .hub-quiz-selector select {
+    width: 90%;
+    max-width: 320px;
+    padding: 12px;
+    text-align: center;
+  }
+  
+  .hub-quiz-selector p {
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+}

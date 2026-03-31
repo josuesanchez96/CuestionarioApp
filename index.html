@@ -1557,18 +1557,15 @@
 
               {!gameStarted && !gameOver && (
                 <section className="hub-screen">
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', alignItems: 'center', marginTop: '15px', marginBottom: '30px' }}>
-                    <label style={{ fontSize: '1rem', fontWeight: 'bold', color: '#4b5563' }}>Activo:</label>
+                  <div className="hub-quiz-selector">
+                    <label>Activo:</label>
                     <select 
                       value={activeQuiz} 
                       onChange={e => loadQuizFromDB(e.target.value)}
-                      style={{ padding: '8px 16px', borderRadius: '10px', background: '#ffffff', color: '#3b82f6', border: '2px solid #3b82f6', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', outline: 'none', transition: 'all 0.2s' }}
                     >
                       {availableQuizzes.map(q => <option key={q} value={q}>{q}</option>)}
                     </select>
-                    <p style={{ margin: '0 0 0 10px', color: '#6b7280', fontSize: '0.9rem' }}>
-                       ({rawRows.length} pregunta{rawRows.length !== 1 ? 's' : ''})
-                    </p>
+                    <p>({rawRows.length} pregunta{rawRows.length !== 1 ? 's' : ''})</p>
                   </div>
                   <div className="hub-buttons">
                     <button className="hub-btn" onClick={() => startModule('module7')}>
