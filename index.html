@@ -1502,6 +1502,23 @@
             <div className="background-gradient" />
             <div className="floating-orb orb-1" />
             <div className="floating-orb orb-2" />
+
+            {gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
+              <div className="m5-top-layout" style={{ position: 'fixed', zIndex: 10000, pointerEvents: 'none' }}>
+                <div className="m5-progress-text" style={{ color: '#374151', fontWeight: 'bold', pointerEvents: 'auto' }}>
+                  {currentIndex + 1} / {totalQuestions}
+                </div>
+                <button 
+                  className="m5-close-btn" 
+                  onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                  title="Salir"
+                  style={{ color: '#374151', pointerEvents: 'auto' }}
+                >
+                  <span className="m5-close-text" style={{ color: '#374151', fontWeight: '600' }}>Salir</span> ⛌
+                </button>
+              </div>
+            )}
+
             <div className="app-container">
               {showTursoConfig && (
                 <div className="overlay-message" style={{ zIndex: 9999 }}>
@@ -1996,8 +2013,25 @@
             <p className="m6-question-text">
               <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
             </p>
+          </div>
 
-            {showComments && (
+          <div className="m6-footer">
+            <button
+              className="m6-nav-btn"
+              onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
+              disabled={currentIndex === 0}
+            >
+              Anterior
+            </button>
+            <button
+              className="m6-nav-btn m6-next-btn"
+              onClick={() => { setRevealed(false); goToNextQuestion(); }}
+            >
+              {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
+            </button>
+          </div>
+
+          {showComments && (
               <div className="m6-comments-container m6-fade-in">
                 <div className="m6-comments-list">
                   {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
@@ -2033,24 +2067,6 @@
                 </div>
               </div>
             )}
-
-          </div>
-
-          <div className="m6-footer">
-            <button
-              className="m6-nav-btn"
-              onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
-              disabled={currentIndex === 0}
-            >
-              Anterior
-            </button>
-            <button
-              className="m6-nav-btn m6-next-btn"
-              onClick={() => { setRevealed(false); goToNextQuestion(); }}
-            >
-              {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
-            </button>
-          </div>
         </div>
                   </div >
                 </main >
@@ -2060,7 +2076,7 @@
 
     {
       gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
-        <main className="game-area">
+          <main className="game-area">
           <div className="question-card question-enter">
             <div className="question-label">Pregunta</div>
             <div className="question-text">{currentQuestion.question}</div>
@@ -2125,12 +2141,6 @@
           <div className="stat-item">
             <span className="stat-label">Errores</span>
             <span className="stat-value stat-bad">{wrongCount}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Progreso</span>
-            <span className="stat-value">
-              {totalQuestions ? `${currentIndex + 1} / ${totalQuestions}` : "-"}
-            </span>
           </div>
         </div>
       )
@@ -2215,9 +2225,6 @@
         <div className="bottom-actions">
           <button className="ghost-button" onClick={handleRestart}>
             Reiniciar ronda
-          </button>
-          <button className="ghost-button" onClick={handleChangeModule}>
-            🔀 Cambiar módulo
           </button>
         </div>
       )

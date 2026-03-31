@@ -2299,16 +2299,14 @@ body:has(.module4-area) {
 
 /* ── Comentarios en Módulo 6 ── */
 .m6-comments-container {
-  margin-top: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #efefef;
+  margin-top: 12px;
+  padding: 16px;
+  background: #ffffff;
+  border-top: 1px solid #efefef;
+  transition: all 0.3s ease;
 }
 
 .m6-comments-list {
-  max-height: 150px;
-  overflow-y: auto;
   margin-bottom: 12px;
 }
 
