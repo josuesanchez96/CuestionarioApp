@@ -579,6 +579,67 @@ body:has(.module4-area) {
   color: #6b7280;
 }
 
+.hub-quiz-selector {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .hub-quiz-selector {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
+.hub-quiz-selector label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #4b5563;
+}
+
+.hub-quiz-selector select {
+  width: 100%;
+  max-width: 320px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
+
+.hub-quiz-selector select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.hub-quiz-selector p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .hub-quiz-selector select {
+    width: auto;
+    min-width: 240px;
+  }
+}
+
 .hub-buttons {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
