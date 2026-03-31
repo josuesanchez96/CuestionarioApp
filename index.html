@@ -1224,8 +1224,11 @@
             toggleFullscreen(true);
           }
 
+          const sessionKey = `cuestionario_session_${newGroup}_${activeQuiz}`;
+          
           // 1. Guardar progreso del grupo anterior si cambiamos de grupo
           if (oldGroup && oldGroup !== newGroup) {
+            const oldSessionKey = `cuestionario_session_${oldGroup}_${activeQuiz}`;
             const session = { 
               questions, 
               currentIndex, 
@@ -1235,13 +1238,13 @@
               failedQuestions,
               gameOver
             };
-            localStorage.setItem(`cuestionario_session_${oldGroup}`, JSON.stringify(session));
+            localStorage.setItem(oldSessionKey, JSON.stringify(session));
           }
 
           // 2. Intentar restaurar progreso del nuevo grupo
           let restored = false;
           if (!forceReset && (oldGroup !== newGroup)) {
-            const saved = localStorage.getItem(`cuestionario_session_${newGroup}`);
+            const saved = localStorage.getItem(sessionKey);
             if (saved) {
               try {
                 const session = JSON.parse(saved);
