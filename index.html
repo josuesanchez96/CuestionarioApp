@@ -1628,40 +1628,40 @@
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
                       <label style={{fontWeight: 'bold', color: '#059669'}}>1. Seleccionar o Editar Cuestionario:</label>
                       
-                      <div style={{display:'flex', gap:'10px', width:'100%'}}>
+                      <div style={{display:'flex', gap:'10px', width:'100%', flexWrap: 'wrap'}}>
                         <select 
                           value={activeQuiz} 
                           onChange={e => loadQuizFromDB(e.target.value)}
-                          style={{ flex: 1, padding: '12px', borderRadius: '8px', background: '#f0fdf4', color: '#065f46', border: '1px solid #10b981', fontSize: '1.1rem', fontWeight: 'bold' }}
+                          style={{ flex: '1 1 200px', padding: '12px', borderRadius: '8px', background: '#f0fdf4', color: '#065f46', border: '1px solid #10b981', fontSize: '1.1rem', fontWeight: 'bold', minWidth: '0' }}
                         >
                           {availableQuizzes.map(q => <option key={q} value={q}>{q}</option>)}
                         </select>
-                        <button onClick={handleDeleteQuizAction} style={{background:'#fee2e2', color:'#b91c1c', border:'1px solid #f87171', borderRadius:'8px', padding:'0 15px', cursor:'pointer', fontWeight:'bold', fontSize:'1.1rem'}} title="Eliminar todo el cuestionario">🗑️</button>
+                        <button onClick={handleDeleteQuizAction} style={{background:'#fee2e2', color:'#b91c1c', border:'1px solid #f87171', borderRadius:'8px', padding:'0 15px', cursor:'pointer', fontWeight:'bold', fontSize:'1.1rem', height: '48px', flexShrink: 0}} title="Eliminar todo el cuestionario">🗑️</button>
                       </div>
 
-                      <div style={{display:'flex', gap:'10px', width:'100%', marginTop:'5px'}}>
+                      <div style={{display:'flex', gap:'10px', width:'100%', marginTop:'5px', flexWrap: 'wrap'}}>
                         <input 
                            type="text"
                            placeholder={`Renombrar "${activeQuiz}" a...`}
                            value={renameQuizValue}
                            onChange={e => setRenameQuizValue(e.target.value)}
-                           style={{flex:1, padding:'8px', borderRadius:'6px', background:'#f3f4f6', color:'#111827', border:'1px solid #d1d5db'}}
+                           style={{flex:'1 1 200px', padding:'8px', borderRadius:'6px', background:'#f3f4f6', color:'#111827', border:'1px solid #d1d5db', minWidth: '0'}}
                         />
-                        <button onClick={handleRenameQuizAction} className="hub-btn" style={{margin:0, padding:'8px 16px', fontSize:'0.9rem'}}>Renombrar</button>
+                        <button onClick={handleRenameQuizAction} className="hub-btn" style={{margin:0, padding:'8px 16px', fontSize:'0.9rem', flex: '1 1 auto'}}>Renombrar</button>
                       </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'flex-start' }}>
                       <label style={{fontWeight: 'bold', color: '#1f2937'}}>✨ Crear Nuevo Cuestionario:</label>
-                      <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '10px', width: '100%', flexWrap: 'wrap' }}>
                         <input 
                           type="text" 
                           placeholder="Nombre (ej. Matemáticas).." 
                           value={newQuizName} 
                           onChange={e => setNewQuizName(e.target.value)}
-                          style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#f3f4f6', color: '#111827', border: '1px solid #d1d5db' }}
+                          style={{ flex: '1 1 200px', padding: '10px', borderRadius: '8px', background: '#f3f4f6', color: '#111827', border: '1px solid #d1d5db', minWidth: '0' }}
                         />
-                        <button onClick={() => { if(newQuizName) { loadQuizFromDB(newQuizName); setNewQuizName(''); } }} className="hub-btn" style={{ padding: '0 20px', margin: 0, fontSize: '0.9rem' }}>Ir / Crear</button>
+                        <button onClick={() => { if(newQuizName) { loadQuizFromDB(newQuizName); setNewQuizName(''); } }} className="hub-btn" style={{ padding: '0 20px', margin: 0, fontSize: '0.9rem', flex: '1 1 auto' }}>Ir / Crear</button>
                       </div>
                     </div>
 
