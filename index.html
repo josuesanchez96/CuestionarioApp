@@ -876,12 +876,14 @@
           if (!isNavModule || !gameStarted || gameOver) return;
 
           const handleKeyDown = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
             const { revealed: isRevealed, currentIndex: idx } = navStateRef.current;
             
             switch (e.key) {
               case ' ':
               case 'Enter':
-                if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                if (e.target.tagName !== 'BUTTON') {
                   e.preventDefault();
                   setRevealed(!isRevealed);
                 }
