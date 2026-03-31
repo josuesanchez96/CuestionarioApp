@@ -1524,7 +1524,7 @@
                   </div>
                 </div>
               )}
-              {(gameMode !== 'module3' && gameMode !== 'module4') && (
+              {(gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module7') && (
                 <header className="app-header">
                   <h1>Cuestionario App</h1>
                   <p className="subtitle">
@@ -1607,8 +1607,20 @@
               )}
 
               {gameStarted && !gameOver && gameMode === 'module7' && (
-                <main className="module7-area" style={{ padding: '20px', maxWidth: '600px', margin: '40px auto 0 auto', color: '#1f2937', textAlign: 'center', background: '#f9fafb', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-                  <h2 style={{ color: '#111827', marginTop: 0 }}>Gestión de Cuestionarios</h2>
+                <>
+                  <div className="m5-top-layout" style={{ position: 'fixed' }}>
+                    <div className="m5-progress-text"></div>
+                    <button 
+                      className="m5-close-btn" 
+                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                      title="Salir"
+                      style={{ color: '#1f2937' }}
+                    >
+                      <span className="m5-close-text">Salir</span> ⛌
+                    </button>
+                  </div>
+                  <main className="module7-area" style={{ padding: '20px', maxWidth: '600px', margin: '40px auto 0 auto', color: '#1f2937', textAlign: 'center', background: '#f9fafb', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
+                    <h2 style={{ color: '#111827', marginTop: 0 }}>Gestión de Cuestionarios</h2>
                   <p style={{marginBottom: '20px', color: '#4b5563'}}>Selecciona un cuestionario activo, o crea uno nuevo para organizarte.</p>
 
                   <div style={{ background: '#ffffff', padding: '20px', borderRadius: '12px', border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
@@ -1723,15 +1735,8 @@
                     </div>
 
                   </div>
-
-                  <button 
-                    className="hub-btn" 
-                    onClick={handleChangeModule} 
-                    style={{ marginTop: '30px', background: '#555', color: '#fff', width: '100%' }}
-                  >
-                    Volver al Menú Principal
-                  </button>
                 </main>
+                </>
               )}
 
               {gameStarted && !gameOver && gameMode === 'module3' && currentQuestion && (
