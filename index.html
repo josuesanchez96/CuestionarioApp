@@ -1965,7 +1965,7 @@
                         }}
                       >
                       <img 
-                        src={`https://picsum.photos/1080/1350?random=${imageSeeds[currentIndex] || currentIndex}`} 
+                        src={`https://picsum.photos/${window.innerWidth > 500 ? '1080' : '1080'}/${window.innerWidth > 500 ? '1080' : '1350'}?random=${imageSeeds[currentIndex] || currentIndex}`} 
                         alt="Instagram style" 
                         className="m6-main-image"
                         key={`img-${currentIndex}-${imageSeeds[currentIndex] || ''}`}

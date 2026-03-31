@@ -2165,6 +2165,7 @@ body:has(.module4-area) {
 @media (min-width: 501px) {
   .m6-image-container {
      max-height: 55vh;
+     aspect-ratio: 1 / 1; /* Resolución cuadrada en escritorio */
   }
 }
 
