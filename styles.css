@@ -2468,3 +2468,29 @@ body:has(.module4-area) {
     padding: 20px;
   }
 }
+
+/* Ajuste para mostrar 2 botones por fila en móviles */
+@media (max-width: 550px) {
+  .hub-buttons {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+  
+  .hub-btn {
+    padding: 15px 10px;
+    border-radius: 16px;
+  }
+  
+  .hub-icon {
+    font-size: 1.8rem;
+  }
+  
+  .hub-title {
+    font-size: 0.9rem;
+  }
+  
+  .hub-desc {
+    font-size: 0.75rem;
+    display: none; /* Ocultamos la descripción en móvil para optimizar espacio */
+  }
+}
