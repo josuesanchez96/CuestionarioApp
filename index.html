@@ -352,6 +352,7 @@
         const [activeQuiz, setActiveQuiz] = useState(() => localStorage.getItem('cuestionario_active_quiz') || 'General');
         const [availableQuizzes, setAvailableQuizzes] = useState(['General']);
         const [newQuizName, setNewQuizName] = useState('');
+        const wakeLockRef = useRef(null);
         const [editingRowIndex, setEditingRowIndex] = useState(null);
         const [editQ, setEditQ] = useState('');
         const [editA, setEditA] = useState('');
@@ -681,6 +682,34 @@
             clearInterval(intervalId);
             setShowMusicReminder(false);
           };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Screen Wake Lock for Study Modules (2,3,4) ---
+        useEffect(() => {
+          if (!('wakeLock' in navigator)) return;
+          const isStudyModule = (gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5');
+          
+          const requestWakeLock = async () => {
+            try {
+              if (wakeLockRef.current) return;
+              wakeLockRef.current = await navigator.wakeLock.request('screen');
+            } catch (err) { }
+          };
+
+          const releaseWakeLock = async () => {
+             if (wakeLockRef.current) {
+               await wakeLockRef.current.release();
+               wakeLockRef.current = null;
+             }
+          };
+
+          if (isStudyModule && gameStarted && !gameOver) {
+            requestWakeLock();
+          } else {
+            releaseWakeLock();
+          }
+
+          return () => { releaseWakeLock(); };
         }, [gameMode, gameStarted, gameOver]);
 
         // --- Galaxy Timer for Module 5 ---
