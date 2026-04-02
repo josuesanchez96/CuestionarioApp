@@ -2077,15 +2077,25 @@ body:has(.module4-area) {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
+@media (min-width: 501px) {
+  .module6-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 8vh 0 40px 0; /* Coloca la tarjeta cerca del centro pero fija la parte superior */
+  }
+}
+
 .m6-card {
   width: 100%;
   max-width: 520px;
   background: #ffffff;
   border: 1px solid #dbdbdb;
-  display: inline-flex; /* Para que solo ocupe el ancho necesario y respete el text-align del padre */
+  display: inline-flex;
   flex-direction: column;
   box-sizing: border-box;
-  text-align: left; /* Restablece alineación de texto interna */
+  text-align: left;
   height: auto;
   vertical-align: top;
   margin-bottom: 20px;
@@ -2093,7 +2103,7 @@ body:has(.module4-area) {
 
 @media (min-width: 501px) {
   .m6-card {
-    margin: 0 auto 20px; /* Sin margen arriba */
+    margin: 0 auto 50px; /* Margen superior 0 para que dependa del padding del padre (8vh) y no se mueva */
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   }
