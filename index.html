@@ -338,6 +338,7 @@
         const isSwipeRef = useRef(false);
         const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
+        const [showMusicReminder, setShowMusicReminder] = useState(false);
 
         const [showTursoConfig, setShowTursoConfig] = useState(false);
         const [tursoUrl, setTursoUrl] = useState(() => localStorage.getItem('turso_url') || 'libsql://cuestionarios-josuedsanchez.aws-us-east-2.turso.io');
@@ -652,6 +653,33 @@
           return () => {
             if (timeoutId) clearTimeout(timeoutId);
             if (resetTimeoutId) clearTimeout(resetTimeoutId);
+          };
+        }, [gameMode, gameStarted, gameOver]);
+
+        // --- Music Reminder for Module 5 ---
+        useEffect(() => {
+          if (gameMode !== 'module6' || !gameStarted || gameOver) {
+            setShowMusicReminder(false);
+            return;
+          }
+
+          const toggleReminder = () => {
+            setShowMusicReminder(true);
+            setTimeout(() => {
+              setShowMusicReminder(false);
+            }, 7000); // 7s cada min
+          };
+
+          // Programación: 10s, 35s y luego cada 8 min
+          const t1 = setTimeout(toggleReminder, 10000);
+          const t2 = setTimeout(toggleReminder, 35000);
+          const intervalId = setInterval(toggleReminder, 480000);
+
+          return () => {
+            clearTimeout(t1);
+            clearTimeout(t2);
+            clearInterval(intervalId);
+            setShowMusicReminder(false);
           };
         }, [gameMode, gameStarted, gameOver]);
 
@@ -1815,17 +1843,7 @@
                   </div>
                   <div className="m3-content-wrapper" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
                     {currentQuestion.question && currentQuestion.question.trim() !== "" && (
-                      <div 
-                        className="m3-question-text" 
-                        style={{ 
-                          opacity: 1,
-                          background: 'transparent',
-                          border: 'none',
-                          boxShadow: 'none',
-                          transition: 'color 0.2s, opacity 0.2s',
-                          color: isDarkTheme ? '#f9fafb' : '#000000'
-                        }}
-                      >
+                      <div className="m3-question-text">
                         {currentQuestion.question}
                       </div>
                     )}
@@ -1943,16 +1961,24 @@
                 >
                   <div className="m6-card" key={currentIndex}>
                     <div className="m6-header">
-                      <div className="m6-user-info-group">
-                        <div className="m6-avatar">Q</div>
-                        <div className="m6-user-texts">
-                          <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                      {showMusicReminder ? (
+                        <div className="m6-music-reminder">
+                          🎧 Ponte audífonos y escucha música
                         </div>
-                      </div>
-                      <div className="m6-header-actions">
-                        <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
-                        <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
-                      </div>
+                      ) : (
+                        <>
+                          <div className="m6-user-info-group">
+                            <div className="m6-avatar">Q</div>
+                            <div className="m6-user-texts">
+                              <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                            </div>
+                          </div>
+                          <div className="m6-header-actions">
+                            <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
+                            <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                      <div 
