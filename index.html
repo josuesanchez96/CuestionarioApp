@@ -1983,7 +1983,7 @@
 
               {gameStarted && !gameOver && gameMode === 'module6' && currentQuestion && (
                 <main 
-                  className="module6-area"
+                  className={`module6-area ${showComments ? 'm6-scroll-active' : ''}`}
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
