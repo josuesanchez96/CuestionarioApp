@@ -2070,6 +2070,7 @@ body:has(.module4-area) {
   inset: 0;
   background-color: #fafafa;
   overflow-y: auto;
+  scrollbar-gutter: stable; /* Reserva espacio para el scrollbar evitanto saltos a la izquierda */
   z-index: 1000;
   display: block; /* Cambio de flex a block para evitar estiramiento vertical */
   padding: 0 0 20px 0; /* Sin espacio arriba, conservando espacio abajo */
