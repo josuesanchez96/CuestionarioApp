@@ -230,7 +230,7 @@
                 style={{ transition: 'opacity 0.2s' }}
               />
             </svg>
-            <div className="clock-text">
+            <div className="clock-text" style={{ color: lightMode === 0 ? '#f9fafb' : '#1f2937' }}>
               {displayTime}
             </div>
           </div>
@@ -1822,7 +1822,8 @@
                           background: 'transparent',
                           border: 'none',
                           boxShadow: 'none',
-                          transition: 'color 0.2s, opacity 0.2s'
+                          transition: 'color 0.2s, opacity 0.2s',
+                          color: isDarkTheme ? '#f9fafb' : '#000000'
                         }}
                       >
                         {currentQuestion.question}
@@ -1838,7 +1839,11 @@
                         transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
                       }}
                     >
-                      <span style={{ opacity: revealed ? 1 : 0, transition: revealed ? 'opacity 0.2s' : 'none' }}>
+                      <span style={{ 
+                        opacity: revealed ? 1 : 0, 
+                        transition: revealed ? 'opacity 0.2s' : 'none',
+                        color: '#3b82f6'
+                      }}>
                         {currentQuestion.answer}
                       </span>
                     </div>
