@@ -340,6 +340,21 @@
         const [showRestartChoice, setShowRestartChoice] = useState(false);
         const [showBigHeart, setShowBigHeart] = useState(false);
         const [showMusicReminder, setShowMusicReminder] = useState(false);
+        const [aodTime, setAodTime] = useState("");
+        const [aodDate, setAodDate] = useState("");
+
+        useEffect(() => {
+          const update = () => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+            const dateStr = now.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+            setAodTime(timeStr);
+            setAodDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', ''));
+          };
+          update();
+          const timer = setInterval(update, 10000);
+          return () => clearInterval(timer);
+        }, []);
 
         const [showTursoConfig, setShowTursoConfig] = useState(false);
         const [tursoUrl, setTursoUrl] = useState(() => localStorage.getItem('turso_url') || 'libsql://cuestionarios-josuedsanchez.aws-us-east-2.turso.io');
@@ -1986,7 +2001,7 @@
                   onClick={() => !gameOver && setRevealed(!revealed)}
                 >
                   {!gameOver ? (
-                    <>
+                    <div className="m4-aod-wrapper">
                       <div className="m5-top-layout">
                         <div className="m5-progress-text">
                           {currentIndex + 1} / {totalQuestions}
@@ -2000,16 +2015,22 @@
                         </button>
                       </div>
 
-                      <div className="m4-question-card">
-                        <div className="m4-question-text">{currentQuestion?.question}</div>
-                      </div>
-
-                      <div className="m4-answer-box">
-                        <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
-                          {currentQuestion?.answer}
+                      <header className="m4-aod-top">
+                        <div className="m4-aod-date">{aodDate}</div>
+                        <div className="m4-aod-hour">{aodTime}</div>
+                      </header>
+                      
+                      <div className="m4-aod-content">
+                        <div className="m4-question-card">
+                          <div className="m4-question-text">{currentQuestion?.question}</div>
+                        </div>
+                        <div className="m4-answer-box">
+                          <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
+                            {currentQuestion?.answer}
+                          </div>
                         </div>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     renderResults("results-m4")
                   )}
