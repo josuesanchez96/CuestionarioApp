@@ -384,7 +384,10 @@
         const [showMusicReminder, setShowMusicReminder] = useState(false);
         const [aodTime, setAodTime] = useState("");
         const [aodDate, setAodDate] = useState("");
-        const [showClockM4, setShowClockM4] = useState(true);
+        const [showClockM4, setShowClockM4] = useState(() => {
+          const saved = localStorage.getItem('cuestionario_showClockM4');
+          return saved !== null ? saved === 'true' : true;
+        });
 
         useEffect(() => {
           const update = () => {
@@ -657,6 +660,7 @@
         useEffect(() => { localStorage.setItem('cuestionario_imageSeeds', JSON.stringify(imageSeeds)); }, [imageSeeds]);
         useEffect(() => { localStorage.setItem('cuestionario_rocketClicks', JSON.stringify(rocketClicks)); }, [rocketClicks]);
         useEffect(() => { localStorage.setItem('cuestionario_viewCounts', JSON.stringify(viewCounts)); }, [viewCounts]);
+        useEffect(() => { localStorage.setItem('cuestionario_showClockM4', showClockM4); }, [showClockM4]);
         useEffect(() => {
           if (gameStarted && !gameOver) {
             // Seguridad: Si el juego marcó que empezó pero no hay preguntas o modo válido, resetear al HUB

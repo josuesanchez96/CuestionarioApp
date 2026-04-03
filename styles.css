@@ -1436,7 +1436,8 @@ body:has(.module4-area) {
 }
 
 .m4-aod-top.m4-clock-hidden {
-  opacity: 0;
+  opacity: 0 !important;
+  animation: none !important;
 }
 
 .m4-aod-analog {
@@ -1554,7 +1555,7 @@ body:has(.module4-area) {
 .m4-answer-text {
   font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
-  font-weight: 300;
+  font-weight: 700;
   color: rgba(96, 165, 250, 0.45);
   opacity: 0;
   letter-spacing: 0.08em;
