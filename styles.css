@@ -1428,6 +1428,12 @@ body:has(.module4-area) {
   align-items: center;
   margin-bottom: 2vh;
   animation: aodFadeIn 1s ease-out;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.m4-aod-top.m4-clock-hidden {
+  opacity: 0;
 }
 
 .m4-aod-analog {

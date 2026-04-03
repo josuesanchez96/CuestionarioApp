@@ -384,6 +384,7 @@
         const [showMusicReminder, setShowMusicReminder] = useState(false);
         const [aodTime, setAodTime] = useState("");
         const [aodDate, setAodDate] = useState("");
+        const [showClockM4, setShowClockM4] = useState(true);
 
         useEffect(() => {
           const update = () => {
@@ -659,8 +660,9 @@
         useEffect(() => {
           if (gameStarted && !gameOver) {
             // Seguridad: Si el juego marcó que empezó pero no hay preguntas o modo válido, resetear al HUB
+            // NOTA: Excluimos 'module7' del chequeo de 'questions' porque es el módulo de gestión donde se suben preguntas.
             const isNavModule = ['module3', 'module4', 'module5', 'module6', 'quiz', 'module7'].includes(gameMode);
-            if (!questions || questions.length === 0 || !isNavModule) {
+            if (!isNavModule || (gameMode !== 'module7' && (!questions || questions.length === 0))) {
               setGameStarted(false);
               setGameMode(null);
             }
@@ -2058,7 +2060,10 @@
                         </button>
                       </div>
                       <div className="m4-aod-wrapper">
-                        <div className="m4-aod-top">
+                        <div 
+                          className={`m4-aod-top ${!showClockM4 ? 'm4-clock-hidden' : ''}`}
+                          onClick={(e) => { e.stopPropagation(); setShowClockM4(!showClockM4); }}
+                        >
                           <AnalogClock />
                         </div>
                         
