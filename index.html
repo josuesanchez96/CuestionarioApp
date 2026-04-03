@@ -1603,7 +1603,7 @@
                   </div>
                 </div>
               )}
-              {(gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module7') && (
+              {(gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module5' && gameMode !== 'module6' && gameMode !== 'module7') && (
                 <header className="app-header">
                   <h1>Cuestionario App</h1>
                   <p className="subtitle">
@@ -1612,7 +1612,7 @@
                 </header>
               )}
 
-              {gameStarted && !gameOver && gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module7' && (
+              {gameStarted && !gameOver && gameMode !== 'module3' && gameMode !== 'module4' && gameMode !== 'module5' && gameMode !== 'module6' && gameMode !== 'module7' && (
                 <section className="progress-bar-wrapper">
                   <div className="progress-bar">
                     <div
@@ -2290,7 +2290,7 @@
                 )
               }
 
-              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4') ? 'none' : '' }}>
+              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module6') ? 'none' : '' }}>
                 <span>
                   Carga tu Excel y convierte el estudio en un juego interactivo.
                 </span>

@@ -2079,21 +2079,20 @@ body:has(.module4-area) {
   position: fixed;
   inset: 0;
   background-color: #fafafa;
-  overflow-y: hidden; /* Oculto por defecto para que esté limpio */
+  overflow-y: auto; /* Siempre auto para permitir scroll si la tarjeta es muy grande */
+  -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  padding: 8vh 0 40px 0; /* Coloca la tarjeta cerca del centro pero fija la parte superior */
+  padding: 4vh 0 40px 0; /* Un poco menos de padding arriba para ganar espacio en móvil */
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 .module6-area.m6-scroll-active {
-  overflow-y: auto; /* Solo permite scroll cuando se abren comentarios */
-  /* Compensación dinámica: añade a la izquierda el ancho que ocupa el scrollbar a la derecha */
-  padding-left: calc(100vw - 100%); 
+  /* Mantenemos la clase por si se necesita lógica adicional, pero el scroll ahora es global */
 }
 
 .m6-card {
@@ -2438,8 +2437,8 @@ body:has(.module4-area) {
   flex: 1;
   border: 1px solid #dbdbdb;
   border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 14px;
+  padding: 8px 10px;
+  font-size: 16px; /* Evita auto-zoom en iOS */
   outline: none;
   background: white;
 }
