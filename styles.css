@@ -2078,7 +2078,7 @@ body:has(.module4-area) {
 .module6-area {
   position: fixed;
   inset: 0;
-  background-color: #fafafa;
+  background: linear-gradient(180deg, #fdfbfb 0%, #ebedee 100%); /* Fondo más elegante y con profundidad */
   overflow-y: auto; /* Siempre auto para permitir scroll si la tarjeta es muy grande */
   -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
   z-index: 1000;
