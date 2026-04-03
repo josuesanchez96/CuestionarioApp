@@ -1454,7 +1454,7 @@ body:has(.module4-area) {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 12px;
+  gap: 20px;
   animation: aodFadeIn 1.2s ease-out;
 }
 
@@ -1466,12 +1466,12 @@ body:has(.module4-area) {
 
 .m4-question-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(1.05rem, 2.1vw, 1.3rem);
-  font-weight: 200;
+  font-size: clamp(1.1rem, 2.25vw, 1.48rem);
+  font-weight: 300;
   color: #e5e7eb;
   opacity: 0.75;
-  line-height: 1.3;
-  letter-spacing: 0.04em;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
 }
 
 .m4-answer-box {
@@ -1484,12 +1484,12 @@ body:has(.module4-area) {
 
 .m4-answer-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+  font-size: clamp(1.1rem, 2.25vw, 1.48rem);
   font-weight: 300;
   color: #3b82f6;
   opacity: 0;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
 }
 
 .m4-answer-text.revealed {
