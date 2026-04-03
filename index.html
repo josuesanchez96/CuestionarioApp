@@ -238,6 +238,48 @@
         );
       }
 
+      function AnalogClock() {
+        const [time, setTime] = React.useState(new Date());
+
+        React.useEffect(() => {
+          const timer = setInterval(() => setTime(new Date()), 1000);
+          return () => clearInterval(timer);
+        }, []);
+
+        const minutes = time.getMinutes();
+        const hours = time.getHours();
+
+        return (
+          <div className="m4-aod-analog">
+            <div className="m4-clock-face">
+              {[...Array(12)].map((_, i) => {
+                const num = i + 1;
+                const angle = num * 30;
+                const isMain = [12, 3, 6, 9].includes(num);
+                return (
+                  <div 
+                    key={i} 
+                    className={`m4-clock-number ${isMain ? 'm4-main-num' : ''}`}
+                    style={{ transform: `rotate(${angle}deg) translate(0, -110px) rotate(-${angle}deg)` }}
+                  >
+                    {num}
+                  </div>
+                );
+              })}
+              <div 
+                className="m4-hand m4-hour-hand" 
+                style={{ transform: `rotate(${hours * 30 + minutes / 2}deg)` }} 
+              />
+              <div 
+                className="m4-hand m4-minute-hand" 
+                style={{ transform: `rotate(${minutes * 6}deg)` }} 
+              />
+              <div className="m4-center-dot" />
+            </div>
+          </div>
+        );
+      }
+
       function App() {
         const [rawRows, setRawRows] = useState(() => {
           const saved = localStorage.getItem('cuestionario_rawRows');
@@ -347,10 +389,10 @@
           const update = () => {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateOptions = { weekday: 'short', day: 'numeric', month: 'long' };
             const dateStr = now.toLocaleDateString('es-ES', dateOptions);
             setAodTime(timeStr);
-            setAodDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1));
+            setAodDate(dateStr.toUpperCase());
           };
           update();
           const timer = setInterval(update, 10000);
@@ -2016,10 +2058,10 @@
                         </button>
                       </div>
                       <div className="m4-aod-wrapper">
-                        <header className="m4-aod-top">
-                          <div className="m4-aod-date">{aodDate}</div>
-                          <div className="m4-aod-hour">{aodTime}</div>
-                        </header>
+                        <div className="m4-aod-top">
+                          <AnalogClock />
+                          <div className="m4-aod-date-analog">{aodDate}</div>
+                        </div>
                         
                         <div className="m4-aod-content">
                           <div className="m4-question-card">
