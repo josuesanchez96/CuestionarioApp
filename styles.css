@@ -1466,12 +1466,12 @@ body:has(.module4-area) {
 
 .m4-question-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(1.1rem, 2.25vw, 1.48rem);
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
   font-weight: 300;
   color: #e5e7eb;
   opacity: 0.75;
-  line-height: 1.4;
-  letter-spacing: 0.03em;
+  line-height: 1.6;
+  letter-spacing: 0.08em;
 }
 
 .m4-answer-box {
@@ -1484,12 +1484,12 @@ body:has(.module4-area) {
 
 .m4-answer-text {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(1.1rem, 2.25vw, 1.48rem);
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
   font-weight: 300;
   color: #3b82f6;
   opacity: 0;
-  letter-spacing: 0.02em;
-  line-height: 1.4;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
 }
 
 .m4-answer-text.revealed {
