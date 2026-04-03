@@ -598,6 +598,17 @@
         useEffect(() => { localStorage.setItem('cuestionario_rocketClicks', JSON.stringify(rocketClicks)); }, [rocketClicks]);
         useEffect(() => { localStorage.setItem('cuestionario_viewCounts', JSON.stringify(viewCounts)); }, [viewCounts]);
         useEffect(() => {
+          if (gameStarted && !gameOver) {
+            // Seguridad: Si el juego marcó que empezó pero no hay preguntas o modo válido, resetear al HUB
+            const isNavModule = ['module3', 'module4', 'module5', 'module6', 'quiz', 'module7'].includes(gameMode);
+            if (!questions || questions.length === 0 || !isNavModule) {
+              setGameStarted(false);
+              setGameMode(null);
+            }
+          }
+        }, [gameStarted, gameOver, gameMode, questions]);
+
+        useEffect(() => {
           if (prevMode) localStorage.setItem('cuestionario_prevMode', prevMode);
           else localStorage.removeItem('cuestionario_prevMode');
         }, [prevMode]);
@@ -1634,7 +1645,7 @@
                 </section>
               )}
 
-              {!gameStarted && !gameOver && (
+              {( !gameStarted || gameOver || (questions.length === 0 && gameMode !== 'module7' )) && (
                 <section className="hub-screen">
                   <div className="hub-quiz-selector">
                     <label>Seleccionar cuestionario:</label>
