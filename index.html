@@ -621,6 +621,65 @@
             ? questions[currentIndex]
             : null;
 
+        const renderResults = (customClass = "") => {
+          return (
+            <section className={`results-card ${customClass} m6-fade-in`}>
+              {gameMode === 'quiz' ? (
+                <>
+                  <h2 className="results-title">Resultados finales</h2>
+                  <div className="results-grid">
+                    <div className="result-item">
+                      <span className="result-label">Total de preguntas</span>
+                      <span className="result-value">{totalQuestions}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Aciertos</span>
+                      <span className="result-value stat-ok">{correctCount}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Errores</span>
+                      <span className="result-value stat-bad">{wrongCount}</span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Éxito</span>
+                      <span className="result-value">
+                        {successPercentage}<span className="result-unit">%</span>
+                      </span>
+                    </div>
+                    <div className="result-item">
+                      <span className="result-label">Puntaje</span>
+                      <span className="result-value">{score}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className="results-title">¡Ronda completada!</h2>
+                  <div className="results-grid">
+                    <div className="result-item">
+                      <span className="result-label">Tarjetas revisadas</span>
+                      <span className="result-value">{totalQuestions}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="results-actions">
+                <button className="restart-button" onClick={handleRestart}>
+                  🔁 Modo de repaso
+                </button>
+                <button className="change-module-btn" onClick={handleChangeModule}>
+                  🔀 Cambiar módulo
+                </button>
+                {gameMode === 'quiz' && failedQuestions.length > 0 && (
+                  <button className="review-button" onClick={handleReviewFailed}>
+                    🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
+                  </button>
+                )}
+              </div>
+            </section>
+          );
+        };
+
         // --- Screen Wake Lock for Module 4 ---
 
 
@@ -1645,7 +1704,7 @@
                 </section>
               )}
 
-              {( !gameStarted || gameOver || (questions.length === 0 && gameMode !== 'module7' )) && (
+              {( !gameStarted || (gameOver && !gameMode) || (questions.length === 0 && gameMode !== 'module7' && !gameStarted)) && (
                 <section className="hub-screen">
                   <div className="hub-quiz-selector">
                     <label>Seleccionar cuestionario:</label>
@@ -1689,7 +1748,6 @@
                       <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
                     </button>
                   </div>
-
                 </section>
               )}
 
@@ -1835,13 +1893,14 @@
                 </>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'module3' && currentQuestion && (
+              {gameStarted && gameMode === 'module3' && (
                 <main
                   className="module3-area"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                   onClick={(e) => {
+                    if (gameOver) return;
                     if (isSwipeRef.current) {
                       isSwipeRef.current = false;
                       return;
@@ -1856,93 +1915,107 @@
                     setRevealed(!revealed);
                   }}
                 >
-                  <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
+                  {!gameOver ? (
+                    <>
+                      <div ref={gradientRef} className={`m3-animated-bg ${lightMode === 2 ? 'active' : ''}`} />
 
-                  <div className="m5-top-layout">
-                    <div className="m5-progress-text">
-                      {currentIndex + 1} / {totalQuestions}
-                    </div>
-                    <button
-                      className="m5-close-btn"
-                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
-                      title="Salir"
-                    >
-                      <span className="m5-close-text">Salir</span> ⛌
-                    </button>
-                  </div>
-
-                  <div
-                    title="Alternar fondo (Tecla S)"
-                    style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100, WebkitTapHighlightColor: 'transparent' }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLightMode((prev) => (prev === 0 ? 1 : 0));
-                    }}
-                  >
-                    <Clock lightMode={lightMode} />
-                  </div>
-                  <div className="m3-content-wrapper" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
-                    {currentQuestion.question && currentQuestion.question.trim() !== "" && (
-                      <div className="m3-question-text">
-                        {currentQuestion.question}
+                      <div className="m5-top-layout">
+                        <div className="m5-progress-text">
+                          {currentIndex + 1} / {totalQuestions}
+                        </div>
+                        <button
+                          className="m5-close-btn"
+                          onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                          title="Salir"
+                        >
+                          <span className="m5-close-text">Salir</span> ⛌
+                        </button>
                       </div>
-                    )}
-                    <div
-                      className="m3-answer-box"
-                      style={{
-                        opacity: 1,
-                        background: 'transparent',
-                        border: 'none',
-                        boxShadow: 'none',
-                        transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
-                      }}
-                    >
-                      <span style={{
-                        opacity: revealed ? 1 : 0,
-                        transition: revealed ? 'opacity 0.2s' : 'none',
-                        color: '#3b82f6'
-                      }}>
-                        {currentQuestion.answer}
-                      </span>
-                    </div>
-                  </div>
+
+                      <div
+                        title="Alternar fondo (Tecla S)"
+                        style={{ cursor: 'pointer', pointerEvents: 'auto', zIndex: 100, WebkitTapHighlightColor: 'transparent' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightMode((prev) => (prev === 0 ? 1 : 0));
+                        }}
+                      >
+                        <Clock lightMode={lightMode} />
+                      </div>
+                      <div className="m3-content-wrapper" style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}>
+                        {currentQuestion && currentQuestion.question && currentQuestion.question.trim() !== "" && (
+                          <div className="m3-question-text">
+                            {currentQuestion.question}
+                          </div>
+                        )}
+                        {currentQuestion && (
+                          <div
+                            className="m3-answer-box"
+                            style={{
+                              opacity: 1,
+                              background: 'transparent',
+                              border: 'none',
+                              boxShadow: 'none',
+                              transition: 'background 0.2s, color 0.2s, opacity 0.2s, border-color 0.2s'
+                            }}
+                          >
+                            <span style={{
+                              opacity: revealed ? 1 : 0,
+                              transition: revealed ? 'opacity 0.2s' : 'none',
+                              color: '#3b82f6'
+                            }}>
+                              {currentQuestion.answer}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    renderResults("results-m3")
+                  )}
                 </main>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'module4' && currentQuestion && (
+              {gameStarted && gameMode === 'module4' && (
                 <main
                   className="module4-area"
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
-                  onClick={() => setRevealed(!revealed)}
+                  onClick={() => !gameOver && setRevealed(!revealed)}
                 >
-                  <div className="m5-top-layout">
-                    <div className="m5-progress-text">
-                      {currentIndex + 1} / {totalQuestions}
-                    </div>
-                    <button
-                      className="m5-close-btn"
-                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
-                      title="Salir"
-                    >
-                      <span className="m5-close-text">Salir</span> ⛌
-                    </button>
-                  </div>
+                  {!gameOver ? (
+                    <>
+                      <div className="m5-top-layout">
+                        <div className="m5-progress-text">
+                          {currentIndex + 1} / {totalQuestions}
+                        </div>
+                        <button
+                          className="m5-close-btn"
+                          onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                          title="Salir"
+                        >
+                          <span className="m5-close-text">Salir</span> ⛌
+                        </button>
+                      </div>
 
-                  <div className="m4-question-card">
-                    <div className="m4-question-text">{currentQuestion.question}</div>
-                  </div>
+                      <div className="m4-question-card">
+                        <div className="m4-question-text">{currentQuestion?.question}</div>
+                      </div>
 
-                  <div className="m4-answer-box">
-                    <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
-                      {currentQuestion.answer}
-                    </div>
-                  </div>
+                      <div className="m4-answer-box">
+                        <div className={`m4-answer-text ${revealed ? 'revealed' : ''}`}>
+                          {currentQuestion?.answer}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    renderResults("results-m4")
+                  )}
                 </main>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'module5' && currentQuestion && (
+              {gameStarted && gameMode === 'module5' && (
                 <main
                   ref={module5Ref}
                   tabIndex={0}
@@ -1952,7 +2025,7 @@
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                   onClick={() => {
-                    setRevealed(!revealed);
+                    if (!gameOver) setRevealed(!revealed);
                   }}
                 >
                   <div className="m5-stars-container">
@@ -1960,243 +2033,255 @@
                     <div className="m5-star-layer m5-stars-2"></div>
                     <div className="m5-star-layer m5-stars-3"></div>
                   </div>
-                  <div className="m5-top-layout">
-                    <div className="m5-progress-text">
-                      {currentIndex + 1} / {totalQuestions}
-                    </div>
-                    <button
-                      className="m5-close-btn"
-                      onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
-                      title="Salir"
-                    >
-                      <span className="m5-close-text">Salir</span> ⛌
-                    </button>
-                  </div>
 
-                  <div className={`m5-comet ${cometDir !== null ? `m5-comet-dir-${cometDir}` : ''}`} />
-                  <div className={`m5-galaxy ${galaxyDir !== null ? `m5-galaxy-dir-${galaxyDir}` : ''}`} />
-                  <div className={`m5-saturn ${saturnDir !== null ? `m5-saturn-dir-${saturnDir}` : ''}`} />
-                  <div className={`m5-moon ${moonDir !== null ? `m5-moon-dir-${moonDir}` : ''}`} />
-                  <div className={`m5-jupiter ${jupiterDir !== null ? `m5-jupiter-dir-${jupiterDir}` : ''}`} />
-                  <div className={`m5-mars ${marsDir !== null ? `m5-mars-dir-${marsDir}` : ''}`} />
+                  {!gameOver ? (
+                    <>
+                      <div className="m5-top-layout">
+                        <div className="m5-progress-text">
+                          {currentIndex + 1} / {totalQuestions}
+                        </div>
+                        <button
+                          className="m5-close-btn"
+                          onClick={(e) => { e.stopPropagation(); handleChangeModule(); }}
+                          title="Salir"
+                        >
+                          <span className="m5-close-text">Salir</span> ⛌
+                        </button>
+                      </div>
 
+                      <div className={`m5-comet ${cometDir !== null ? `m5-comet-dir-${cometDir}` : ''}`} />
+                      <div className={`m5-galaxy ${galaxyDir !== null ? `m5-galaxy-dir-${galaxyDir}` : ''}`} />
+                      <div className={`m5-saturn ${saturnDir !== null ? `m5-saturn-dir-${saturnDir}` : ''}`} />
+                      <div className={`m5-moon ${moonDir !== null ? `m5-moon-dir-${moonDir}` : ''}`} />
+                      <div className={`m5-jupiter ${jupiterDir !== null ? `m5-jupiter-dir-${jupiterDir}` : ''}`} />
+                      <div className={`m5-mars ${marsDir !== null ? `m5-mars-dir-${marsDir}` : ''}`} />
 
-
-                  <div className="m5-content">
-                    {!revealed ? (
-                      <div className="m5-question m5-fade-in">{currentQuestion.question}</div>
-                    ) : (
-                      <div className="m5-answer m5-fade-in">{currentQuestion.answer}</div>
-                    )}
-                  </div>
+                      <div className="m5-content">
+                        {!revealed ? (
+                          <div className="m5-question m5-fade-in">{currentQuestion?.question}</div>
+                        ) : (
+                          <div className="m5-answer m5-fade-in">{currentQuestion?.answer}</div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    renderResults("results-m5")
+                  )}
                 </main>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'module6' && currentQuestion && (
+              {gameStarted && gameMode === 'module6' && (
                 <main
                   className={`module6-area ${showComments ? 'm6-scroll-active' : ''}`}
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
                   onTouchEnd={handleTouchEnd}
                 >
-                  <div className="m6-card" key={currentIndex}>
-                    <div className="m6-header">
-                      {showMusicReminder ? (
-                        <div className="m6-music-reminder">
-                          🎧 Ponte audífonos y escucha buena música
+                  {!gameOver ? (
+                    <div className="m6-card" key={currentIndex}>
+                      <div className="m6-header">
+                        {showMusicReminder ? (
+                          <div className="m6-music-reminder">
+                            🎧 Ponte audífonos y escucha buena música
+                          </div>
+                        ) : (
+                          <>
+                            <div className="m6-user-info-group">
+                              <div className="m6-avatar">Q</div>
+                              <div className="m6-user-texts">
+                                <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                              </div>
+                            </div>
+                            <div className="m6-header-actions">
+                              <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
+                              <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      <div
+                        className="m6-image-container"
+                        onClick={() => {
+                          if (!revealed) {
+                            const key = currentQuestion.question + currentQuestion.answer;
+                            setViewCounts(prev => {
+                              const nextVal = (prev[key] || 0) + 1;
+                              syncToTurso(key, 'views', nextVal);
+                              return { ...prev, [key]: nextVal };
+                            });
+                          }
+                          setRevealed(!revealed);
+                        }}
+                      >
+                        <img
+                          src={`https://picsum.photos/${window.innerWidth > 500 ? '1080' : '1080'}/${window.innerWidth > 500 ? '1080' : '1350'}?random=${imageSeeds[currentIndex] || currentIndex}`}
+                          alt="Instagram style"
+                          className="m6-main-image"
+                          key={`img-${currentIndex}-${imageSeeds[currentIndex] || ''}`}
+                          loading="lazy"
+                        />
+                        {showBigHeart && (
+                          <div className="m6-heart-animation">❤️</div>
+                        )}
+
+                        <div className={`m6-image-answer-overlay ${revealed ? 'm6-visible' : ''}`}>
+                          <div className="m6-overlay-answer-box">
+                            {currentQuestion?.answer}
+                          </div>
                         </div>
-                      ) : (
-                        <>
-                          <div className="m6-user-info-group">
-                            <div className="m6-avatar">Q</div>
-                            <div className="m6-user-texts">
-                              <span className="m6-location">Pregunta {currentIndex + 1} de {totalQuestions}</span>
+                      </div>
+
+                      <div className="m6-content-section">
+                        <div className="m6-interactions">
+                          <div className="m6-interaction-group">
+                            <span
+                              className={`m6-icon ${likedQuestions.includes(currentQuestion?.question + currentQuestion?.answer) ? 'm6-liked' : ''}`}
+                              onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
+                              title={likedQuestions.includes(currentQuestion?.question + currentQuestion?.answer) ? "Ya me la sé" : "Marcar como conocida"}
+                            >
+                              {likedQuestions.includes(currentQuestion?.question + currentQuestion?.answer) ? '❤️' : '🤍'}
+                            </span>
+                          </div>
+
+                          <div className="m6-interaction-group">
+                            <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
+                              {showComments ? '💬' : '🗨️'}
+                            </span>
+                            <span className="m6-counter">{(comments[currentQuestion?.question + currentQuestion?.answer] || []).length}</span>
+                          </div>
+
+                          <div className="m6-interaction-group">
+                            <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
+                            <span className="m6-counter">{viewCounts[currentQuestion?.question + currentQuestion?.answer] || 0}</span>
+                          </div>
+                        </div>
+
+                        <div className="m6-text-content">
+                          <p className="m6-question-text">
+                            <span className="m6-username-inline">Pregunta:</span> {currentQuestion?.question}
+                          </p>
+                        </div>
+
+                        <div className="m6-footer">
+                          <button
+                            className="m6-nav-btn"
+                            onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
+                            disabled={currentIndex === 0}
+                          >
+                            Anterior
+                          </button>
+                          <button
+                            className="m6-nav-btn m6-next-btn"
+                            onClick={() => { setRevealed(false); goToNextQuestion(); }}
+                          >
+                            {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
+                          </button>
+                        </div>
+
+                        {showComments && (
+                          <div className="m6-comments-container m6-fade-in">
+                            <div className="m6-comments-list">
+                              {(comments[currentQuestion?.question + currentQuestion?.answer] || []).map((c, i) => (
+                                <div key={i} className="m6-comment">
+                                  <div className="m6-comment-top">
+                                    <span className="m6-username-inline">josued.sanchez</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
+                                      <button onClick={(e) => { e.stopPropagation(); deleteComment(currentQuestion, i); }} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }} title="Eliminar comentario">✖</button>
+                                    </div>
+                                  </div>
+                                  <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
+                                </div>
+                              ))}
+                              {!(comments[currentQuestion?.question + currentQuestion?.answer] || []).length && (
+                                <p className="m6-no-comments">No hay comentarios aún.</p>
+                              )}
+                            </div>
+                            <div className="m6-add-comment">
+                              <input
+                                type="text"
+                                placeholder="Añade un comentario..."
+                                value={currentComment}
+                                onChange={(e) => setCurrentComment(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
+                              />
+                              <button
+                                onClick={() => addComment(currentQuestion)}
+                                disabled={!currentComment.trim()}
+                              >
+                                Publicar
+                              </button>
                             </div>
                           </div>
-                          <div className="m6-header-actions">
-                            <button className="m6-restart-btn" title="Reiniciar cuestionario" onClick={(e) => { e.stopPropagation(); handleRestart(); }}>🔄</button>
-                            <button className="m6-close-x" onClick={handleChangeModule}>⛌</button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    <div
-                      className="m6-image-container"
-                      onClick={() => {
-                        if (!revealed) {
-                          const key = currentQuestion.question + currentQuestion.answer;
-                          setViewCounts(prev => {
-                            const nextVal = (prev[key] || 0) + 1;
-                            syncToTurso(key, 'views', nextVal);
-                            return { ...prev, [key]: nextVal };
-                          });
-                        }
-                        setRevealed(!revealed);
-                      }}
-                    >
-                      <img
-                        src={`https://picsum.photos/${window.innerWidth > 500 ? '1080' : '1080'}/${window.innerWidth > 500 ? '1080' : '1350'}?random=${imageSeeds[currentIndex] || currentIndex}`}
-                        alt="Instagram style"
-                        className="m6-main-image"
-                        key={`img-${currentIndex}-${imageSeeds[currentIndex] || ''}`}
-                        loading="lazy"
-                      />
-                      {showBigHeart && (
-                        <div className="m6-heart-animation">❤️</div>
-                      )}
-
-                      <div className={`m6-image-answer-overlay ${revealed ? 'm6-visible' : ''}`}>
-                        <div className="m6-overlay-answer-box">
-                          {currentQuestion.answer}
-                        </div>
+                        )}
                       </div>
                     </div>
-
-                    <div className="m6-content-section">
-                      <div className="m6-interactions">
-                        <div className="m6-interaction-group">
-                          <span
-                            className={`m6-icon ${likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? 'm6-liked' : ''}`}
-                            onClick={(e) => { e.stopPropagation(); toggleKnown(currentQuestion); }}
-                            title={likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? "Ya me la sé" : "Marcar como conocida"}
-                          >
-                            {likedQuestions.includes(currentQuestion.question + currentQuestion.answer) ? '❤️' : '🤍'}
-                          </span>
-                        </div>
-
-                        <div className="m6-interaction-group">
-                          <span className="m6-icon" onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}>
-                            {showComments ? '💬' : '🗨️'}
-                          </span>
-                          <span className="m6-counter">{(comments[currentQuestion.question + currentQuestion.answer] || []).length}</span>
-                        </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: '100vh', padding: '20px' }}>
+                      {renderResults("results-m6")}
+                    </div>
+                  )}
+                </main>
+              )}
 
 
-
-                        <div className="m6-interaction-group">
-                          <span className="m6-icon" style={{ cursor: 'default' }}>👁️</span>
-                          <span className="m6-counter">{viewCounts[currentQuestion.question + currentQuestion.answer] || 0}</span>
-                        </div>
+              {gameStarted && gameMode === 'quiz' && (
+                <main className="game-area">
+                  {!gameOver ? (
+                    <>
+                      <div className="question-card question-enter">
+                        <div className="question-label">Pregunta</div>
+                        <div className="question-text">{currentQuestion?.question}</div>
                       </div>
 
-                      <div className="m6-text-content">
-                        <p className="m6-question-text">
-                          <span className="m6-username-inline">Pregunta:</span> {currentQuestion.question}
-                        </p>
-                      </div>
+                      <div className="options-container">
+                        {options.map((opt, idx) => {
+                          const isSelected =
+                            selectedOption && selectedOption.text === opt.text;
+                          const isEliminated = disabledOptions.includes(opt.text);
+                          const labels = ["A", "B", "C", "D"];
 
-                      <div className="m6-footer">
-                        <button
-                          className="m6-nav-btn"
-                          onClick={() => { setRevealed(false); setCurrentIndex(prev => Math.max(0, prev - 1)); }}
-                          disabled={currentIndex === 0}
-                        >
-                          Anterior
-                        </button>
-                        <button
-                          className="m6-nav-btn m6-next-btn"
-                          onClick={() => { setRevealed(false); goToNextQuestion(); }}
-                        >
-                          {currentIndex + 1 < totalQuestions ? 'Siguiente' : 'Finalizar'}
-                        </button>
-                      </div>
+                          let className = "option-button";
+                          if (isEliminated) {
+                            className += " option-eliminated";
+                          } else if (isSelected && feedback?.type === "correct") {
+                            className += " option-correct option-pulse";
+                          } else if (isSelected && feedback?.type === "wrong") {
+                            className += " option-wrong option-shake";
+                          }
 
-                      {showComments && (
-                        <div className="m6-comments-container m6-fade-in">
-                          <div className="m6-comments-list">
-                            {(comments[currentQuestion.question + currentQuestion.answer] || []).map((c, i) => (
-                              <div key={i} className="m6-comment">
-                                <div className="m6-comment-top">
-                                  <span className="m6-username-inline">josued.sanchez</span>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span className="m6-comment-time">{typeof c === 'string' ? '' : getFormattedTime(c.time)}</span>
-                                    <button onClick={(e) => { e.stopPropagation(); deleteComment(currentQuestion, i); }} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: 0, fontSize: '0.8rem' }} title="Eliminar comentario">✖</button>
-                                  </div>
-                                </div>
-                                <div className="m6-comment-text">{typeof c === 'string' ? c : c.text}</div>
-                              </div>
-                            ))}
-                            {!(comments[currentQuestion.question + currentQuestion.answer] || []).length && (
-                              <p className="m6-no-comments">No hay comentarios aún.</p>
-                            )}
-                          </div>
-                          <div className="m6-add-comment">
-                            <input
-                              type="text"
-                              placeholder="Añade un comentario..."
-                              value={currentComment}
-                              onChange={(e) => setCurrentComment(e.target.value)}
-                              onKeyDown={(e) => e.key === 'Enter' && addComment(currentQuestion)}
-                            />
+                          return (
                             <button
-                              onClick={() => addComment(currentQuestion)}
-                              disabled={!currentComment.trim()}
+                              key={idx}
+                              className={className}
+                              onClick={() => handleOptionClick(opt)}
+                              disabled={!!selectedOption || isEliminated}
                             >
-                              Publicar
+                              <span className="option-label">{labels[idx]}</span>
+                              {opt.text}
                             </button>
-                          </div>
+                          );
+                        })}
+                      </div>
+
+                      {feedback && (
+                        <div
+                          className={
+                            feedback.type === "correct"
+                              ? "feedback feedback-correct"
+                              : "feedback feedback-wrong"
+                          }
+                        >
+                          {feedback.message}
                         </div>
                       )}
-                    </div>
-                  </div >
-                </main >
-              )
-              }
-
-
-              {
-                gameStarted && !gameOver && gameMode === 'quiz' && currentQuestion && (
-                  <main className="game-area">
-                    <div className="question-card question-enter">
-                      <div className="question-label">Pregunta</div>
-                      <div className="question-text">{currentQuestion.question}</div>
-                    </div>
-
-                    <div className="options-container">
-                      {options.map((opt, idx) => {
-                        const isSelected =
-                          selectedOption && selectedOption.text === opt.text;
-                        const isEliminated = disabledOptions.includes(opt.text);
-                        const labels = ["A", "B", "C", "D"];
-
-                        let className = "option-button";
-                        if (isEliminated) {
-                          className += " option-eliminated";
-                        } else if (isSelected && feedback?.type === "correct") {
-                          className += " option-correct option-pulse";
-                        } else if (isSelected && feedback?.type === "wrong") {
-                          className += " option-wrong option-shake";
-                        }
-
-                        return (
-                          <button
-                            key={idx}
-                            className={className}
-                            onClick={() => handleOptionClick(opt)}
-                            disabled={!!selectedOption || isEliminated}
-                          >
-                            <span className="option-label">{labels[idx]}</span>
-                            {opt.text}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {feedback && (
-                      <div
-                        className={
-                          feedback.type === "correct"
-                            ? "feedback feedback-correct"
-                            : "feedback feedback-wrong"
-                        }
-                      >
-                        {feedback.message}
-                      </div>
-                    )}
-                  </main>
-                )
-              }
+                    </>
+                  ) : (
+                    renderResults("results-quiz")
+                  )}
+                </main>
+              )}
 
               {
                 gameStarted && !gameOver && gameMode === 'quiz' && (
@@ -2232,64 +2317,7 @@
                 )
               }
 
-              {
-                gameOver && (
-                  <section className="results-card">
-                    {gameMode === 'quiz' ? (
-                      <>
-                        <h2>Resultados finales</h2>
-                        <div className="results-grid">
-                          <div className="result-item">
-                            <span className="result-label">Total de preguntas</span>
-                            <span className="result-value">{totalQuestions}</span>
-                          </div>
-                          <div className="result-item">
-                            <span className="result-label">Aciertos</span>
-                            <span className="result-value stat-ok">{correctCount}</span>
-                          </div>
-                          <div className="result-item">
-                            <span className="result-label">Errores</span>
-                            <span className="result-value stat-bad">{wrongCount}</span>
-                          </div>
-                          <div className="result-item">
-                            <span className="result-label">Porcentaje de éxito</span>
-                            <span className="result-value">
-                              {successPercentage}<span className="result-unit">%</span>
-                            </span>
-                          </div>
-                          <div className="result-item">
-                            <span className="result-label">Puntaje final</span>
-                            <span className="result-value">{score}</span>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <h2>¡Ronda completada!</h2>
-                        <div className="results-grid">
-                          <div className="result-item">
-                            <span className="result-label">Tarjetas revisadas</span>
-                            <span className="result-value">{totalQuestions}</span>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                    <div className="results-actions">
-                      <button className="restart-button" onClick={handleRestart}>
-                        🔁 Modo de repaso
-                      </button>
-                      <button className="change-module-btn" onClick={handleChangeModule}>
-                        🔀 Cambiar módulo
-                      </button>
-                      {gameMode === 'quiz' && failedQuestions.length > 0 && (
-                        <button className="review-button" onClick={handleReviewFailed}>
-                          🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
-                        </button>
-                      )}
-                    </div>
-                  </section>
-                )
-              }
+              {/* La sección de results-card ha sido movida dentro de cada módulo */}
 
               {
                 gameStarted && !gameOver && gameMode === 'quiz' && (

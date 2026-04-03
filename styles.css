@@ -2707,3 +2707,97 @@ body:has(.module4-area) {
     margin-top: 4px;
   }
 }
+
+/* ── Temas Personalizados para Resultados por Módulos ───────────────── */
+
+/* Módulo 1: Quiz (Predeterminado) */
+.results-card.results-quiz {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+/* Módulo 2: Dark Focus (Reloj) */
+.results-m3 {
+  background: #111827 !important;
+  border: 2px solid #3b82f6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+  max-width: 500px;
+  width: 90%;
+  margin: auto;
+}
+
+.results-m3 .results-title { color: #60a5fa !important; }
+.results-m3 .result-item { background: #1f2937 !important; border-color: #374151 !important; }
+.results-m3 .result-label { color: #9ca3af !important; }
+.results-m3 .result-value { color: #ffffff !important; }
+
+/* Módulo 3: Minimalista */
+.results-m4 {
+  background: #000000 !important;
+  border: 1px solid #3f3f46 !important;
+  color: #d1d5db !important;
+  max-width: 500px;
+  width: 90%;
+  margin: auto;
+}
+
+.results-m4 .results-title { color: #f9fafb !important; }
+.results-m4 .result-item { background: #09090b !important; border-color: #27272a !important; }
+.results-m4 .result-label { color: #71717a !important; }
+.results-m4 .result-value { color: #e4e4e7 !important; }
+
+/* Módulo 4: Espacial */
+.results-m5 {
+  background: rgba(15, 23, 42, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  color: #f0f9ff !important;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  max-width: 500px;
+  width: 90%;
+  margin: auto;
+}
+
+.results-m5 .results-title { color: #38bdf8 !important; text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
+.results-m5 .result-item { background: rgba(30, 41, 59, 0.5) !important; border-color: rgba(56, 189, 248, 0.2) !important; }
+.results-m5 .result-label { color: #7dd3fc !important; }
+.results-m5 .result-value { color: #ffffff !important; }
+
+/* Módulo 5: Instagram */
+.results-m6 {
+  background: #ffffff !important;
+  border: 1px solid #dbdbdb !important;
+  border-radius: 12px !important;
+  color: #262626 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 400px;
+  width: 100%;
+}
+
+.results-m6 .results-title { 
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #dbdbdb;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.results-m6 .result-item { 
+  background: #fafafa !important; 
+  border: none !important;
+  text-align: center;
+}
+
+.results-m6 .results-actions {
+  flex-direction: column;
+  width: 100%;
+}
+
+.results-m6 .results-actions button {
+  width: 100%;
+  margin: 0;
+}
