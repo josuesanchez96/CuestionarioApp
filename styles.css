@@ -1429,18 +1429,18 @@ body:has(.module4-area) {
 
 .m4-aod-date {
   font-family: 'Inter', sans-serif;
-  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+  font-size: clamp(1.05rem, 2.1vw, 1.3rem);
   font-weight: 200;
   color: #e5e7eb;
   opacity: 0.75;
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .m4-aod-hour {
   font-family: 'Inter', sans-serif;
   font-size: clamp(4.2rem, 13vw, 6.5rem);
-  font-weight: 200;
+  font-weight: 400;
   color: #e5e7eb;
   opacity: 0.75;
   letter-spacing: -0.03em;

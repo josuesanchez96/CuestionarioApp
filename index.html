@@ -347,9 +347,10 @@
           const update = () => {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-            const dateStr = now.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+            const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+            const dateStr = now.toLocaleDateString('es-ES', dateOptions);
             setAodTime(timeStr);
-            setAodDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1).replace('.', ''));
+            setAodDate(dateStr.charAt(0).toUpperCase() + dateStr.slice(1));
           };
           update();
           const timer = setInterval(update, 10000);
