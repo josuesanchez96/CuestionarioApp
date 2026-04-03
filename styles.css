@@ -1426,8 +1426,7 @@ body:has(.module4-area) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 3vh;
+  margin-bottom: 2vh;
   animation: aodFadeIn 1s ease-out;
 }
 
