@@ -2047,12 +2047,22 @@ body:has(.module4-area) {
   100% { transform: translate(110vw, 60vh) rotate(360deg); opacity: 0; }
 }
 
-.m5-question, .m5-answer {
+.m5-question {
   font-size: clamp(1.3rem, 3.5vw, 2.4rem);
   font-weight: 500;
   text-align: center;
   line-height: 1.4;
   letter-spacing: 0.02em;
+}
+
+.m5-answer {
+  font-size: clamp(1.6rem, 4.5vw, 3rem);
+  font-weight: 700;
+  color: #7dd3fc;
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 20px rgba(125, 211, 252, 0.5);
 }
 
 .m5-fade-in {
