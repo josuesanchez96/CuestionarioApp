@@ -819,33 +819,7 @@
           };
         }, [gameMode, gameStarted, gameOver]);
 
-        // --- Screen Wake Lock for Study Modules (2,3,4) ---
-        useEffect(() => {
-          if (!('wakeLock' in navigator)) return;
-          const isStudyModule = (gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5');
-
-          const requestWakeLock = async () => {
-            try {
-              if (wakeLockRef.current) return;
-              wakeLockRef.current = await navigator.wakeLock.request('screen');
-            } catch (err) { }
-          };
-
-          const releaseWakeLock = async () => {
-            if (wakeLockRef.current) {
-              await wakeLockRef.current.release();
-              wakeLockRef.current = null;
-            }
-          };
-
-          if (isStudyModule && gameStarted && !gameOver) {
-            requestWakeLock();
-          } else {
-            releaseWakeLock();
-          }
-
-          return () => { releaseWakeLock(); };
-        }, [gameMode, gameStarted, gameOver]);
+        // WakeLock ref is no longer used here. Handled correctly in the global wake lock effect below.
 
         // --- Galaxy Timer for Module 5 ---
         useEffect(() => {
@@ -1012,7 +986,7 @@
           };
         }, [gameMode, gameStarted, gameOver]);
 
-        // --- Screen Wake Lock (Module 4 & 5) ---
+        // --- Screen Wake Lock (Study Modules: 3, 4 & 5) ---
         useEffect(() => {
           let wakeLock = null;
 
@@ -1037,13 +1011,13 @@
           };
 
           const handleVisibilityChange = () => {
-            const isTargetMode = gameMode === 'module4' || gameMode === 'module5';
+            const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5';
             if (document.visibilityState === 'visible' && gameStarted && !gameOver && isTargetMode) {
               requestWakeLock();
             }
           };
 
-          const isTargetMode = gameMode === 'module4' || gameMode === 'module5';
+          const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5';
           if (gameStarted && !gameOver && isTargetMode) {
             requestWakeLock();
             document.addEventListener('visibilitychange', handleVisibilityChange);
