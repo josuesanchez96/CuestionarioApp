@@ -10,6 +10,33 @@ function shuffleArray(array) {
 }
 
 function App() {
+  const [vh, setVh] = useState(window.innerHeight * 0.01);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      // Usamos el visualViewport si está disponible para mayor precisión en móviles
+      const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      setVh(height * 0.01);
+      document.documentElement.style.setProperty("--vh", `${height * 0.01}px`);
+    };
+
+    window.addEventListener("resize", updateHeight);
+    window.addEventListener("orientationchange", updateHeight);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", updateHeight);
+    }
+    
+    updateHeight(); // Llamada inicial
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", updateHeight);
+      }
+    };
+  }, []);
+
   const [rawRows, setRawRows] = useState([]); // {answer, question}
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -282,9 +309,20 @@ function App() {
       : Math.round((correctCount / (correctCount + wrongCount)) * 100);
 
   return (
-    <div className="app-root">
+    <div
+      className="app-root"
+      style={{
+        height: "calc(var(--vh, 1vh) * 100)",
+        minHeight: "-webkit-fill-available",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        overflow: "hidden"
+      }}
+    >
       <div className="background-gradient" />
-      <div className="app-container">
+      <div className="app-container" style={{ margin: "0", maxHeight: "100%", overflowY: "auto" }}>
         <header className="app-header">
           <h1>Cuestionario desde Excel</h1>
           <p className="subtitle">
