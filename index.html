@@ -1388,8 +1388,8 @@
           const oldGroup = getModuleGroup(prevMode);
           const newGroup = getModuleGroup(mode);
 
-          if (mode === 'module4') {
-            toggleFullscreen(true);
+          if (mode === 'module7') {
+            setQuestions([]);
           }
 
           const sessionKey = `cuestionario_session_${newGroup}_${activeQuiz}`;
@@ -1511,35 +1511,25 @@
         };
 
         async function toggleFullscreen(enable) {
+          const doc = document.documentElement;
           try {
             if (enable) {
-              if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
-              } else if (document.documentElement.webkitRequestFullscreen) {
-                await document.documentElement.webkitRequestFullscreen();
-              } else if (document.documentElement.msRequestFullscreen) {
-                await document.documentElement.msRequestFullscreen();
-              }
+              const request = doc.requestFullscreen || doc.webkitRequestFullscreen || doc.mozRequestFullScreen || doc.msRequestFullscreen;
+              if (request) await request.call(doc);
             } else {
-              if (document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-                if (document.exitFullscreen) {
-                  await document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                  await document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                  await document.msExitFullscreen();
-                }
+              const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+              if (isFs) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+                if (exit) await exit.call(document);
               }
             }
           } catch (err) {
-            console.warn("Fullscreen error:", err);
+            console.warn("Fullscreen toggle error:", err);
           }
         }
 
         function handleChangeModule() {
-          if (gameMode === 'module4') {
-            toggleFullscreen(false);
-          }
+          toggleFullscreen(false);
           setPrevMode(gameMode);
           setGameStarted(false);
           setGameOver(false);
@@ -1761,27 +1751,27 @@
                       <span className="hub-title">Gestión de Cuestionarios</span>
                       <span className="hub-desc">Crear y Subir Archivos</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('quiz')}>
+                    <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('quiz'); }}>
                       <span className="hub-icon">🎯</span>
                       <span className="hub-title">Módulo 1</span>
                       <span className="hub-desc">Cuestionario con puntaje y aciertos</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('module3')}>
+                    <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('module3'); }}>
                       <span className="hub-icon">⏱️</span>
                       <span className="hub-title">Módulo 2</span>
                       <span className="hub-desc">Foco concentrado con reloj (Claro/Oscuro)</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('module4')}>
+                    <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('module4'); }}>
                       <span className="hub-icon">🖤</span>
                       <span className="hub-title">Módulo 3</span>
                       <span className="hub-desc">Minimalista: Fondo negro y respuestas grises</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('module5')}>
+                    <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('module5'); }}>
                       <span className="hub-icon">🚀</span>
                       <span className="hub-title">Módulo 4</span>
                       <span className="hub-desc">Estudio espacial con planetas y cometas</span>
                     </button>
-                    <button className="hub-btn" onClick={() => startModule('module6')}>
+                    <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('module6'); }}>
                       <span className="hub-icon">📸</span>
                       <span className="hub-title">Módulo 5</span>
                       <span className="hub-desc">Estilo Instagram con imágenes y comentarios</span>
