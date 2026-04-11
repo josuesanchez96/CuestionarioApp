@@ -14,26 +14,18 @@ function App() {
 
   useEffect(() => {
     const updateHeight = () => {
-      // Usamos el visualViewport si está disponible para mayor precisión en móviles
       const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       setVh(height * 0.01);
       document.documentElement.style.setProperty("--vh", `${height * 0.01}px`);
     };
-
     window.addEventListener("resize", updateHeight);
     window.addEventListener("orientationchange", updateHeight);
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", updateHeight);
-    }
-    
-    updateHeight(); // Llamada inicial
-
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", updateHeight);
+    updateHeight();
     return () => {
       window.removeEventListener("resize", updateHeight);
       window.removeEventListener("orientationchange", updateHeight);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener("resize", updateHeight);
-      }
+      if (window.visualViewport) window.visualViewport.removeEventListener("resize", updateHeight);
     };
   }, []);
 
@@ -70,7 +62,6 @@ function App() {
     } else {
       setOptions([]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questions, currentIndex]);
 
   useEffect(() => {
@@ -79,18 +70,14 @@ function App() {
     };
   }, []);
 
-  // Reproduce celebración cuando termina el juego
   useEffect(() => {
-    if (gameOver) {
-      playSound(sfxCelebration);
-    }
+    if (gameOver) playSound(sfxCelebration);
   }, [gameOver]);
 
   function handleFileChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setLoadingFile(true);
-
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -99,29 +86,14 @@ function App() {
         const firstSheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[firstSheetName];
         const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
         const parsed = rows
-          .filter(
-            (row) =>
-              Array.isArray(row) &&
-              row.length >= 2 &&
-              row[0] != null &&
-              row[1] != null &&
-              String(row[1]).trim() !== ""
-          )
-          .map((row) => ({
-            answer: String(row[0]).trim(),
-            question: String(row[1]).trim(),
-          }));
-
+          .filter(row => Array.isArray(row) && row.length >= 2 && row[0] != null && row[1] != null && String(row[1]).trim() !== "")
+          .map(row => ({ answer: String(row[0]).trim(), question: String(row[1]).trim() }));
         if (parsed.length < 2) {
-          alert(
-            "El archivo debe tener al menos dos filas válidas con respuesta (columna 1) y pregunta (columna 2)."
-          );
+          alert("El archivo debe tener al menos dos filas válidas.");
           setLoadingFile(false);
           return;
         }
-
         setRawRows(parsed);
         const shuffled = shuffleArray(parsed);
         setQuestions(shuffled);
@@ -134,17 +106,11 @@ function App() {
         setSelectedOption(null);
         setFeedback(null);
       } catch (error) {
-        console.error(error);
         alert("Hubo un problema al leer el archivo Excel.");
       } finally {
         setLoadingFile(false);
       }
     };
-    reader.onerror = () => {
-      alert("No se pudo leer el archivo.");
-      setLoadingFile(false);
-    };
-
     reader.readAsArrayBuffer(file);
     e.target.value = "";
   }
@@ -152,25 +118,10 @@ function App() {
   function prepareOptionsForCurrentQuestion() {
     const current = questions[currentIndex];
     if (!current) return;
-
-    const otherAnswers = questions
-      .filter((_, idx) => idx !== currentIndex)
-      .map((q) => q.answer)
-      .filter((a) => a !== current.answer);
-
-    // Shuffle distractors and pick up to 3
-    const shuffledOthers = shuffleArray(otherAnswers);
-    const numDistractors = Math.min(3, shuffledOthers.length);
-    const distractors = shuffledOthers.slice(0, numDistractors).map((text) => ({
-      text,
-      isCorrect: false,
-    }));
-
-    const opts = shuffleArray([
-      { text: current.answer, isCorrect: true },
-      ...distractors,
-    ]);
-
+    const otherAnswers = questions.filter((_, idx) => idx !== currentIndex).map(q => q.answer).filter(a => a !== current.answer);
+    const shuffledOthers = shuffleArray(otherAnswers).slice(0, Math.min(3, otherAnswers.length));
+    const distractors = shuffledOthers.map(text => ({ text, isCorrect: false }));
+    const opts = shuffleArray([{ text: current.answer, isCorrect: true }, ...distractors]);
     setOptions(opts);
     setSelectedOption(null);
     setFeedback(null);
@@ -186,70 +137,39 @@ function App() {
 
   function triggerConfetti() {
     if (typeof confetti !== "function") return;
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 },
-    });
+    confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
   }
 
   function handleOptionClick(option) {
     if (!options.length || selectedOption || disabledOptions.includes(option.text)) return;
-    // Desbloquear audio en el primer gesto del usuario
     if (!celebrationUnlocked.current) {
       const unlock = sfxCelebration.current.play();
-      if (unlock !== undefined) {
-        unlock.then(() => {
-          sfxCelebration.current.pause();
-          sfxCelebration.current.currentTime = 0;
-        }).catch(() => { });
-      }
+      if (unlock !== undefined) unlock.then(() => { sfxCelebration.current.pause(); sfxCelebration.current.currentTime = 0; }).catch(() => { });
       celebrationUnlocked.current = true;
     }
-
     setSelectedOption(option);
-
-    const isCorrect = option.isCorrect;
-    if (isCorrect) {
+    if (option.isCorrect) {
       setFeedback({ type: "correct", message: "¡Correcto!" });
       playSound(sfxCorrect);
-      const pts = Math.round(100 / questions.length);
-      setScore((s) => s + (disabledOptions.length === 0 ? pts : 0));
-      if (disabledOptions.length === 0) setCorrectCount((c) => c + 1);
+      setScore(s => s + (disabledOptions.length === 0 ? Math.round(100 / questions.length) : 0));
+      if (disabledOptions.length === 0) setCorrectCount(c => c + 1);
       triggerConfetti();
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        goToNextQuestion();
-      }, 1600);
+      timeoutRef.current = setTimeout(goToNextQuestion, 1600);
     } else {
-      // Track failed question (only first wrong attempt per question)
       if (disabledOptions.length === 0) {
         const current = questions[currentIndex];
-        setFailedQuestions((prev) => {
-          const alreadyTracked = prev.some(
-            (q) => q.answer === current.answer && q.question === current.question
-          );
-          return alreadyTracked ? prev : [...prev, current];
-        });
+        setFailedQuestions(prev => prev.some(q => q.answer === current.answer) ? prev : [...prev, current]);
       }
       setFeedback({ type: "wrong", message: "Incorrecto. ¡Intenta de nuevo!" });
       playSound(sfxError);
-      setWrongCount((c) => c + 1);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => {
-        setDisabledOptions((prev) => [...prev, option.text]);
-        setSelectedOption(null);
-        setFeedback(null);
-      }, 1600);
+      setWrongCount(c => c + 1);
+      timeoutRef.current = setTimeout(() => { setDisabledOptions(prev => [...prev, option.text]); setSelectedOption(null); setFeedback(null); }, 1600);
     }
   }
 
   function goToNextQuestion() {
-    setCurrentIndex((idx) => {
-      if (idx + 1 >= questions.length) {
-        setGameOver(true);
-        return idx;
-      }
+    setCurrentIndex(idx => {
+      if (idx + 1 >= questions.length) { setGameOver(true); return idx; }
       return idx + 1;
     });
     setSelectedOption(null);
@@ -258,76 +178,29 @@ function App() {
 
   function handleRestart() {
     if (!rawRows.length) {
-      setQuestions([]);
-      setGameStarted(false);
-      setGameOver(false);
-      setScore(0);
-      setCorrectCount(0);
-      setWrongCount(0);
-      setCurrentIndex(0);
-      setSelectedOption(null);
-      setFeedback(null);
-      setFailedQuestions([]);
-      return;
+      setQuestions([]); setGameStarted(false); setGameOver(false); setScore(0); setCorrectCount(0); setWrongCount(0); setCurrentIndex(0); setSelectedOption(null); setFeedback(null); setFailedQuestions([]); return;
     }
     const shuffled = shuffleArray(rawRows);
-    setQuestions(shuffled);
-    setCurrentIndex(0);
-    setScore(0);
-    setCorrectCount(0);
-    setWrongCount(0);
-    setGameOver(false);
-    setGameStarted(true);
-    setSelectedOption(null);
-    setFeedback(null);
-    setFailedQuestions([]);
+    setQuestions(shuffled); setCurrentIndex(0); setScore(0); setCorrectCount(0); setWrongCount(0); setGameOver(false); setGameStarted(true); setSelectedOption(null); setFeedback(null); setFailedQuestions([]);
   }
 
   function handleReviewFailed() {
     if (!failedQuestions.length) return;
     const shuffled = shuffleArray(failedQuestions);
-    setQuestions(shuffled);
-    setCurrentIndex(0);
-    setScore(0);
-    setCorrectCount(0);
-    setWrongCount(0);
-    setGameOver(false);
-    setGameStarted(true);
-    setSelectedOption(null);
-    setFeedback(null);
-    setFailedQuestions([]);
+    setQuestions(shuffled); setCurrentIndex(0); setScore(0); setCorrectCount(0); setWrongCount(0); setGameOver(false); setGameStarted(true); setSelectedOption(null); setFeedback(null); setFailedQuestions([]);
   }
 
-  const currentQuestion =
-    questions.length && currentIndex < questions.length
-      ? questions[currentIndex]
-      : null;
+  const currentQuestion = questions.length && currentIndex < questions.length ? questions[currentIndex] : null;
 
-  const successPercentage =
-    correctCount + wrongCount === 0
-      ? 0
-      : Math.round((correctCount / (correctCount + wrongCount)) * 100);
+  const successPercentage = correctCount + wrongCount === 0 ? 0 : Math.round((correctCount / (correctCount + wrongCount)) * 100);
 
   return (
-    <div
-      className="app-root"
-      style={{
-        height: "calc(var(--vh, 1vh) * 100)",
-        minHeight: "-webkit-fill-available",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        overflow: "hidden"
-      }}
-    >
+    <div className="app-root">
       <div className="background-gradient" />
-      <div className="app-container" style={{ margin: "0", maxHeight: "100%", overflowY: "auto" }}>
+      <div className="app-container">
         <header className="app-header">
-          <h1>Cuestionario desde Excel</h1>
-          <p className="subtitle">
-            Estudia tus conceptos convirtiendo tu Excel en un juego rápido.
-          </p>
+          <h1>Cuestionario App</h1>
+          <p className="subtitle">Estudia tus conceptos convirtiendo tu Excel en un juego rápido.</p>
         </header>
 
         <section className="top-bar">
@@ -335,73 +208,35 @@ function App() {
             <div className="file-input-wrapper">
               <label className="file-label">
                 <span>📁 Cargar archivo Excel</span>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileChange}
-                />
+                <input type="file" accept=".xlsx,.xls" onChange={handleFileChange} />
               </label>
-              <p className="file-help">
-                Columna 1: respuesta correcta · Columna 2: pregunta
-              </p>
+              <p className="file-help">Columna 1: respuesta · Columna 2: pregunta</p>
             </div>
           )}
 
-          {!gameOver && (
+          {!gameOver && gameStarted && (
             <div className="stats">
-              <div className="stat-item">
-                <span className="stat-label">Puntaje</span>
-                <span className="stat-value">{score}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Aciertos</span>
-                <span className="stat-value stat-ok">{correctCount}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Errores</span>
-                <span className="stat-value stat-bad">{wrongCount}</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-label">Progreso</span>
-                <span className="stat-value">
-                  {totalQuestions ? `${currentIndex + 1} / ${totalQuestions}` : "-"}
-                </span>
-              </div>
+              <div className="stat-item"><span className="stat-label">Puntaje</span><span className="stat-value">{score}</span></div>
+              <div className="stat-item"><span className="stat-label">Aciertos</span><span className="stat-value stat-ok">{correctCount}</span></div>
+              <div className="stat-item"><span className="stat-label">Errores</span><span className="stat-value stat-bad">{wrongCount}</span></div>
+              <div className="stat-item"><span className="stat-label">Progreso</span><span className="stat-value">{totalQuestions ? `${currentIndex + 1}/${totalQuestions}` : "-"}</span></div>
             </div>
           )}
         </section>
 
         <section className="progress-bar-wrapper">
-          <div className="progress-bar">
-            <div
-              className="progress-fill"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          <div className="progress-bar"><div className="progress-fill" style={{ width: `${progressPercent}%` }} /></div>
         </section>
 
         {!gameStarted && (
           <section className="welcome-card">
-            <h2>Sube tu archivo para empezar</h2>
-            <p>
-              El juego mostrará una pregunta y dos posibles respuestas. Una será
-              la correcta y la otra se tomará de otra fila de tu Excel.
-            </p>
-            <p>
-              Responde lo más rápido que puedas, suma puntos y revisa tus
-              resultados al final.
-            </p>
+            <h2>¡Bienvenido!</h2>
+            <p>Sube tu Excel para empezar. El juego tomará respuestas de otras filas como distractores.</p>
+            <p>Responde rápido para sumar puntos y repasa tus errores al final.</p>
           </section>
         )}
 
-        {loadingFile && (
-          <div className="overlay-message">
-            <div className="overlay-card">
-              <div className="spinner" />
-              <p>Leyendo archivo Excel...</p>
-            </div>
-          </div>
-        )}
+        {loadingFile && <div className="overlay-message"><div className="overlay-card"><div className="spinner" /><p>Leyendo Excel...</p></div></div>}
 
         {gameStarted && !gameOver && currentQuestion && (
           <main className="game-area">
@@ -409,48 +244,20 @@ function App() {
               <div className="question-label">Pregunta</div>
               <div className="question-text">{currentQuestion.question}</div>
             </div>
-
             <div className="options-container">
-              {options.map((opt, idx) => {
-                const isSelected =
-                  selectedOption && selectedOption.text === opt.text;
-                const isEliminated = disabledOptions.includes(opt.text);
-                const labels = ["A", "B", "C", "D"];
-
-                let className = "option-button";
-                if (isEliminated) {
-                  className += " option-eliminated";
-                } else if (isSelected && feedback?.type === "correct") {
-                  className += " option-correct option-pulse";
-                } else if (isSelected && feedback?.type === "wrong") {
-                  className += " option-wrong option-shake";
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    className={className}
-                    onClick={() => handleOptionClick(opt)}
-                    disabled={!!selectedOption || isEliminated}
-                  >
-                    <span className="option-label">{labels[idx]}</span>
-                    {opt.text}
-                  </button>
-                );
-              })}
+              {options.map((opt, idx) => (
+                <button
+                  key={idx}
+                  className={`option-button ${disabledOptions.includes(opt.text) ? "option-eliminated" : selectedOption?.text === opt.text ? (feedback?.type === "correct" ? "option-correct option-pulse" : "option-wrong option-shake") : ""}`}
+                  onClick={() => handleOptionClick(opt)}
+                  disabled={!!selectedOption || disabledOptions.includes(opt.text)}
+                >
+                  <span className="option-label">{["A", "B", "C", "D"][idx]}</span>
+                  {opt.text}
+                </button>
+              ))}
             </div>
-
-            {feedback && (
-              <div
-                className={
-                  feedback.type === "correct"
-                    ? "feedback feedback-correct"
-                    : "feedback feedback-wrong"
-                }
-              >
-                {feedback.message}
-              </div>
-            )}
+            {feedback && <div className={`feedback feedback-${feedback.type}`}>{feedback.message}</div>}
           </main>
         )}
 
@@ -458,56 +265,23 @@ function App() {
           <section className="results-card">
             <h2>Resultados finales</h2>
             <div className="results-grid">
-              <div className="result-item">
-                <span className="result-label">Total de preguntas</span>
-                <span className="result-value">{totalQuestions}</span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Aciertos</span>
-                <span className="result-value stat-ok">{correctCount}</span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Errores</span>
-                <span className="result-value stat-bad">{wrongCount}</span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Porcentaje de éxito</span>
-                <span className="result-value">
-                  {successPercentage}
-                  <span className="result-unit">%</span>
-                </span>
-              </div>
-              <div className="result-item">
-                <span className="result-label">Puntaje final</span>
-                <span className="result-value">{score}</span>
-              </div>
+              <div className="result-item"><span className="result-label">Preguntas</span><span className="result-value">{totalQuestions}</span></div>
+              <div className="result-item"><span className="result-label">Aciertos</span><span className="result-value stat-ok">{correctCount}</span></div>
+              <div className="result-item"><span className="result-label">Errores</span><span className="result-value stat-bad">{wrongCount}</span></div>
+              <div className="result-item"><span className="result-label">% Éxito</span><span className="result-value">{successPercentage}%</span></div>
             </div>
             <div className="results-actions">
-              <button className="restart-button" onClick={handleRestart}>
-                Reiniciar juego
-              </button>
-              {failedQuestions.length > 0 && (
-                <button className="review-button" onClick={handleReviewFailed}>
-                  🔁 Repasar {failedQuestions.length} error{failedQuestions.length !== 1 ? "es" : ""}
-                </button>
-              )}
+              <button className="restart-button" onClick={handleRestart}>Reiniciar juego</button>
+              {failedQuestions.length > 0 && <button className="review-button" onClick={handleReviewFailed}>🔁 Repasar errores</button>}
             </div>
           </section>
         )}
 
         {gameStarted && !gameOver && (
           <div className="bottom-actions">
-            <button className="ghost-button" onClick={handleRestart}>
-              Reiniciar ronda
-            </button>
+            <button className="ghost-button" onClick={handleRestart}>Volver al inicio</button>
           </div>
         )}
-
-        <footer className="app-footer">
-          <span>
-            Carga tu Excel y convierte el estudio en un juego interactivo.
-          </span>
-        </footer>
       </div>
     </div>
   );
