@@ -2098,8 +2098,25 @@
               )}
 
               {gameStarted && !gameOver && gameMode === 'module8' && (
-                <div className="module8-container" style={{ padding: '20px', minHeight: '100vh', background: '#000', margin: '0', textAlign: 'center', color: '#fff', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }}>
-                   <div className="m5-top-layout" style={{ position: 'static', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                <div className="module8-container" style={{ 
+                  padding: '10px', 
+                  height: '100vh', 
+                  background: '#000', 
+                  margin: '0', 
+                  textAlign: 'center', 
+                  color: '#fff', 
+                  position: 'fixed', 
+                  top: 0, 
+                  left: 0, 
+                  right: 0, 
+                  bottom: 0, 
+                  zIndex: 9999,
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  WebkitOverflowScrolling: 'touch'
+                }}>
+                   <div className="m5-top-layout" style={{ position: 'sticky', top: 0, justifyContent: 'flex-end', padding: '10px', background: '#000', zIndex: 10 }}>
                     <button 
                       className="m5-close-btn" 
                       onClick={() => { toggleAudio(false); handleChangeModule(); }}
@@ -2107,11 +2124,11 @@
                     >Salir ⛌</button>
                   </div>
 
-                  <div className="audio-card" style={{ background: 'transparent', padding: '10px', marginTop: '10px' }}>
-                     <div style={{ marginBottom: '40px' }}>
-                        <h3 style={{ fontSize: '1.2rem', margin: '10px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
+                  <div className="audio-card" style={{ background: 'transparent', padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '30px' }}>
+                     <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '1.1rem', margin: '15px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
-                        <div style={{ fontSize: '1.8rem', fontWeight: '300', color: '#fff', minHeight: '5em', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', lineHeight: '1.4' }}>
+                        <div style={{ fontSize: '1.6rem', fontWeight: '300', color: '#fff', minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 20px', lineHeight: '1.3' }}>
                           {(audioStep >= 0 && audioStep <= 2) && `"${questions[currentIndex]?.question}"`}
                           {(audioStep >= 3 && audioStep <= 5) && <span style={{ color: '#10b981' }}>"{questions[currentIndex]?.answer}"</span>}
                           {(audioStep >= 6 && audioStep <= 8) && <span style={{ color: '#fbbf24' }}>"{questions[currentIndex]?.keywords || 'Sin etiquetas'}"</span>}
