@@ -421,8 +421,9 @@
         const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
         const ttsInstance = useRef(window.speechSynthesis);
         const silentAudioRef = useRef(null); // Audio element for keep-alive
+        const heartbeatRef = useRef(null); // Interval to keep media session alive
         
-        // Archivo WAV de 1 segundo de silencio absoluto en Base64
+        // Archivo WAV de 10 segundos de 'casi silencio' (1Hz) para engañar al chip de audio de Samsung
         const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/wD/";
 
         const generateKeywords = async (question, answer) => {
@@ -701,15 +702,28 @@
           audioRef.current.playing = play;
           const silentAudio = document.getElementById('silent-keep-alive');
           
+          if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+
           if (play) {
-            // TRUCO SAMSUNG: El audio DEBE estar en el DOM y reproducirse
+            // FORZAR AUDIO SAMSUNG
             if (silentAudio) {
-              silentAudio.play().catch(e => console.warn("Sync audio fail:", e));
+              silentAudio.volume = 0.01;
+              silentAudio.play().catch(() => {});
               
-              // Forzar actualización inmediata de MediaSession
-              if ('mediaSession' in navigator) {
-                navigator.mediaSession.playbackState = 'playing';
-              }
+              // Latido de persistencia para evitar suspension de Chrome en segundo plano
+              heartbeatRef.current = setInterval(() => {
+                  if ('mediaSession' in navigator) {
+                      navigator.mediaSession.playbackState = 'playing';
+                      // Actualizar posicion para que el sistema vea actividad constante
+                      if (navigator.mediaSession.setPositionState) {
+                          navigator.mediaSession.setPositionState({
+                              duration: 3600,
+                              playbackRate: 1,
+                              position: Math.floor(Date.now() / 1000) % 3600
+                          });
+                      }
+                  }
+              }, 1000);
             }
             runAudioCycle();
           } else {
