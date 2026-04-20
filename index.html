@@ -705,16 +705,18 @@
           if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
           if (play) {
-            // FORZAR AUDIO SAMSUNG
             if (silentAudio) {
-              silentAudio.volume = 0.01;
+              silentAudio.volume = 0.05; // Un poco más alto para Samsung Internet
               silentAudio.play().catch(() => {});
               
-              // Latido de persistencia para evitar suspension de Chrome en segundo plano
+              // Intentar re-reproducir si el sistema lo pausa (Eco-mode de Samsung)
+              silentAudio.onpause = () => {
+                  if (audioRef.current.playing) silentAudio.play().catch(() => {});
+              };
+
               heartbeatRef.current = setInterval(() => {
                   if ('mediaSession' in navigator) {
                       navigator.mediaSession.playbackState = 'playing';
-                      // Actualizar posicion para que el sistema vea actividad constante
                       if (navigator.mediaSession.setPositionState) {
                           navigator.mediaSession.setPositionState({
                               duration: 3600,
@@ -730,6 +732,7 @@
             ttsInstance.current.cancel();
             if (silentAudio) {
               silentAudio.pause();
+              silentAudio.onpause = null;
               if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = 'paused';
               }
