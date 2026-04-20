@@ -705,6 +705,10 @@
           if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
           if (play) {
+            // Sincronizar motor de audio con la posición visual actual
+            audioRef.current.index = currentIndex;
+            audioRef.current.step = 0; // Empezar desde el inicio de la pregunta actual
+
             if (keepAlive) {
               keepAlive.volume = 0.05;
               keepAlive.play().catch(() => {});
@@ -1782,12 +1786,13 @@
               const shuffled = shuffleArray(filteredRows);
               setQuestions(shuffled);
               setCurrentIndex(0);
-              audioRef.current.index = 0;
               setScore(0);
               setCorrectCount(0);
               setWrongCount(0);
               setFailedQuestions([]);
               setGameOver(false);
+            } else {
+              audioRef.current.index = currentIndex;
             }
           }
 
