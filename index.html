@@ -699,23 +699,26 @@
         const toggleAudio = (play) => {
           setAudioPlaying(play);
           audioRef.current.playing = play;
+          const silentAudio = document.getElementById('silent-keep-alive');
+          
           if (play) {
-            // TRUCO DEFINITIVO: Usar un elemento AUDIO real con un archivo de silencio 
-            // Esto obliga a Android/iOS a mostrar los controles multimedia en la barra de notificaciones.
-            try {
-              if (!silentAudioRef.current) {
-                const audio = new Audio(silentWav);
-                audio.loop = true;
-                silentAudioRef.current = audio;
+            // TRUCO SAMSUNG: El audio DEBE estar en el DOM y reproducirse
+            if (silentAudio) {
+              silentAudio.play().catch(e => console.warn("Sync audio fail:", e));
+              
+              // Forzar actualización inmediata de MediaSession
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
               }
-              silentAudioRef.current.play().catch(e => console.warn("Audio play failed:", e));
-            } catch (e) { console.warn("Keep-alive audio failed:", e); }
-            
+            }
             runAudioCycle();
           } else {
             ttsInstance.current.cancel();
-            if (silentAudioRef.current) {
-              silentAudioRef.current.pause();
+            if (silentAudio) {
+              silentAudio.pause();
+              if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+              }
             }
           }
         };
@@ -2146,9 +2149,10 @@
                   overflowY: 'auto',
                   display: 'flex',
                   flexDirection: 'column',
+                  alignItems: 'center',
                   WebkitOverflowScrolling: 'touch'
                 }}>
-                   <div className="m5-top-layout" style={{ position: 'sticky', top: 0, justifyContent: 'flex-end', padding: '10px', background: '#000', zIndex: 10 }}>
+                   <div className="m5-top-layout" style={{ position: 'sticky', top: 0, width: '100%', display: 'flex', justifyContent: 'flex-end', padding: '10px', background: '#000', zIndex: 10, boxSizing: 'border-box' }}>
                     <button 
                       className="m5-close-btn" 
                       onClick={() => { toggleAudio(false); handleChangeModule(); }}
@@ -2156,8 +2160,8 @@
                     >Salir ⛌</button>
                   </div>
 
-                  <div className="audio-card" style={{ background: 'transparent', padding: '5px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
-                     <div>
+                  <div className="audio-card" style={{ background: 'transparent', padding: '5px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '450px', boxSizing: 'border-box' }}>
+                     <div style={{ width: '100%' }}>
                         <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
                         <div style={{ fontSize: '1.2rem', fontWeight: '300', color: '#fff', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.2', border: '1px solid #111', borderRadius: '12px', background: '#050505' }}>
@@ -2835,6 +2839,9 @@
                 )
               }
 
+              
+              {/* Elemento de Audio Fantasma para mantener vivo el sistema en móviles (Samsung/Xiaomi) */}
+              <audio id="silent-keep-alive" loop src={silentWav} style={{ display: 'none' }} />
             </div>
           </div>
         );
