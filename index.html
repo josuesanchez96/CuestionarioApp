@@ -418,7 +418,7 @@
         const [audioPlaying, setAudioPlaying] = useState(false);
         const [audioSpeed, setAudioSpeed] = useState(1.0);
         const [audioStep, setAudioStep] = useState(0); 
-        const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
+        const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0, loopId: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
         const ttsInstance = useRef(window.speechSynthesis);
         const silentAudioRef = useRef(null); // Audio element for keep-alive
         const heartbeatRef = useRef(null); // Interval to keep media session alive
@@ -743,6 +743,7 @@
 
         const skipAudio = (dir) => {
           const next = Math.max(0, Math.min(questions.length - 1, currentIndex + dir));
+          audioRef.current.loopId++;
           audioRef.current.index = next;
           setCurrentIndex(next);
           audioRef.current.step = 0;
@@ -755,6 +756,7 @@
 
         const runAudioCycle = async () => {
           if (!audioRef.current.playing || questions.length === 0) return;
+          const currentLoopId = audioRef.current.loopId;
           
           const idxToUse = audioRef.current.index;
           const row = questions[idxToUse];
@@ -821,12 +823,12 @@
             
             // Medir cuánto tardó el audio en hablar
             let duration = Date.now() - audioRef.current.startTime;
-            if (duration < 500) duration = 2000; // Seguridad contra saltos rápidos extraños
+            if (duration < 500) duration = 3000; // Seguridad contra saltos rápidos extraños
 
             audioRef.current.lastDuration = duration;
 
             setTimeout(() => {
-              if (!audioRef.current.playing) return;
+              if (!audioRef.current.playing || audioRef.current.loopId !== currentLoopId) return;
               
               const keepAlive = document.getElementById('silent-keep-alive');
               if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
@@ -846,9 +848,10 @@
 
           utterance.onerror = (e) => {
               console.error("TTS Error:", e);
-              // Retry on another bug where engine crashes
-              if (audioRef.current.playing) {
-                  setTimeout(() => runAudioCycle(), 1000);
+              if (audioRef.current.playing && audioRef.current.loopId === currentLoopId) {
+                  setTimeout(() => {
+                      if (audioRef.current.loopId === currentLoopId) runAudioCycle();
+                  }, 1000);
               }
           };
 
@@ -1790,6 +1793,13 @@
               setWrongCount(0);
               setFailedQuestions([]);
               setGameOver(false);
+              // Modo pantalla completa obligatorio para el stealth mode del Módulo 6 (Audio)
+              if (mode === 'module8') {
+                  const docEl = document.documentElement;
+                  if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+                  else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+                  else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen().catch(() => {});
+              }
             } else {
               audioRef.current.index = currentIndex;
             }
@@ -2179,46 +2189,46 @@
                     <button 
                       className="m5-close-btn" 
                       onClick={() => { toggleAudio(false); handleChangeModule(); }}
-                      style={{ color: '#fff', border: '1px solid #333', background: 'transparent' }}
+                      style={{ color: 'rgba(255,255,255,0.15)', border: 'none', background: 'transparent' }}
                     >Salir ⛌</button>
                   </div>
 
-                  <div className="audio-card" style={{ background: 'transparent', width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px', boxSizing: 'border-box' }}>
+                  <div className="audio-card" style={{ background: 'transparent', border: 'none', width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px', boxSizing: 'border-box' }}>
                      <div style={{ width: '100%' }}>
-                        <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
+                        <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: 'rgba(255,255,255,0.05)' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
-                        <div style={{ fontSize: '1.2rem', fontWeight: '300', color: '#fff', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.2', border: '1px solid #111', borderRadius: '12px', background: '#050505' }}>
-                          {(audioStep >= 0 && audioStep <= 2) && `"${questions[currentIndex]?.question}"`}
-                          {(audioStep >= 3 && audioStep <= 5) && <span style={{ color: '#10b981' }}>"{questions[currentIndex]?.answer}"</span>}
-                          {(audioStep >= 6 && audioStep <= 8) && <span style={{ color: '#fbbf24' }}>"{questions[currentIndex]?.keywords || 'Sin etiquetas'}"</span>}
+                        <div style={{ fontSize: '1.2rem', fontWeight: '300', color: 'rgba(255,255,255,0.15)', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.2', border: 'none', background: 'transparent' }}>
+                          <p style={{ margin: 0 }}>
+                              {audioStep < 3 ? 'Escuchando Pregunta...' : audioStep < 6 ? 'Escuchando Respuesta...' : 'Memorizando Claves...'}
+                          </p>
                         </div>
                      </div>
 
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '300px', margin: '0 auto', width: '100%' }}>
-                        <div style={{ textAlign: 'left', background: '#0f0f0f', padding: '10px', borderRadius: '12px', border: '1px solid #222' }}>
-                          <label style={{ fontSize: '0.7rem', fontWeight: 'bold', color: '#3b82f6', display: 'block', marginBottom: '4px' }}>⚡ Velocidad: {audioSpeed}x</label>
-                          <input type="range" min="0.5" max="1.5" step="0.1" value={audioSpeed} onChange={e => setAudioSpeed(parseFloat(e.target.value))} style={{ width: '100%', height: '4px' }} />
+                        <div style={{ textAlign: 'left', background: 'transparent', padding: '10px', borderRadius: '12px', border: 'none' }}>
+                          <label style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'rgba(255,255,255,0.1)', display: 'block', marginBottom: '4px' }}>Velocidad: {audioSpeed}x</label>
+                          <input type="range" min="0.5" max="1.5" step="0.1" value={audioSpeed} onChange={e => setAudioSpeed(parseFloat(e.target.value))} style={{ width: '100%', height: '4px', opacity: 0.2 }} />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
-                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: '#444', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏮</button>
+                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏮</button>
                            <button 
                              onClick={() => toggleAudio(!audioPlaying)} 
                              style={{ 
-                               background: audioPlaying ? '#dc2626' : '#2563eb', 
-                               color: '#fff', 
-                               border: 'none', 
-                               borderRadius: '12px', 
+                               background: 'transparent', 
+                               color: 'rgba(255,255,255,0.15)', 
+                               border: '1px solid rgba(255,255,255,0.1)', 
+                               borderRadius: '30px', 
                                padding: '10px 20px', 
-                               fontSize: '1rem', 
-                               fontWeight: 'bold',
+                               fontSize: '0.9rem', 
+                               fontWeight: '600',
                                cursor: 'pointer', 
                                minWidth: '140px'
                              }}
                            >
                              {audioPlaying ? 'PAUSAR' : 'INICIAR AUDIO'}
                            </button>
-                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: '#444', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏭</button>
+                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏭</button>
                         </div>
                      </div>
                   </div>
