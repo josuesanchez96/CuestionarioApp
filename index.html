@@ -418,7 +418,7 @@
         const [audioPlaying, setAudioPlaying] = useState(false);
         const [audioSpeed, setAudioSpeed] = useState(1.0);
         const [audioStep, setAudioStep] = useState(0); 
-        const audioRef = useRef({ playing: false, step: 0, lastDuration: 2000, startTime: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
+        const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
         const ttsInstance = useRef(window.speechSynthesis);
 
         const generateKeywords = async (question, answer) => {
@@ -704,6 +704,7 @@
 
         const skipAudio = (dir) => {
           const next = Math.max(0, Math.min(questions.length - 1, currentIndex + dir));
+          audioRef.current.index = next;
           setCurrentIndex(next);
           audioRef.current.step = 0;
           setAudioStep(0);
@@ -716,13 +717,14 @@
         const runAudioCycle = async () => {
           if (!audioRef.current.playing || questions.length === 0) return;
           
-          const row = questions[currentIndex];
+          const idxToUse = audioRef.current.index;
+          const row = questions[idxToUse];
           if (!row) return;
 
           // Actualizar MediaSession (Pantalla bloqueada)
           if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
-              title: `Pregunta ${currentIndex + 1}`,
+              title: `Pregunta ${idxToUse + 1}`,
               artist: activeQuiz,
               album: 'Audio Estudio 3x3x3',
               artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3039/3039401.png', sizes: '512x512', type: 'image/png' }]
@@ -777,13 +779,14 @@
               audioRef.current.step++;
               if (audioRef.current.step > 8) {
                 audioRef.current.step = 0;
-                const nextIdx = currentIndex + 1;
+                let nextIdx = audioRef.current.index + 1;
+                
+                // BUCLE INFINITO: Si llegamos al final, reiniciamos a 0
                 if (nextIdx >= questions.length) {
-                    toggleAudio(false);
-                    setAudioStep(0);
-                    alert("¡Cuestionario completado!");
-                    return;
+                    nextIdx = 0; 
                 }
+                
+                audioRef.current.index = nextIdx;
                 setCurrentIndex(nextIdx);
               }
               setAudioStep(audioRef.current.step);
@@ -1276,13 +1279,13 @@
           };
 
           const handleVisibilityChange = () => {
-            const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5';
+            const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module8';
             if (document.visibilityState === 'visible' && gameStarted && !gameOver && isTargetMode) {
               requestWakeLock();
             }
           };
 
-          const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5';
+          const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module8';
           if (gameStarted && !gameOver && isTargetMode) {
             requestWakeLock();
             document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -1729,6 +1732,7 @@
               const shuffled = shuffleArray(filteredRows);
               setQuestions(shuffled);
               setCurrentIndex(0);
+              audioRef.current.index = 0;
               setScore(0);
               setCorrectCount(0);
               setWrongCount(0);
@@ -2124,26 +2128,26 @@
                     >Salir ⛌</button>
                   </div>
 
-                  <div className="audio-card" style={{ background: 'transparent', padding: '10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '30px' }}>
-                     <div style={{ marginBottom: '20px' }}>
-                        <h3 style={{ fontSize: '1.1rem', margin: '15px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
+                  <div className="audio-card" style={{ background: 'transparent', padding: '5px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', paddingBottom: '20px' }}>
+                     <div style={{ marginBottom: '10px' }}>
+                        <h3 style={{ fontSize: '0.9rem', margin: '10px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
-                        <div style={{ fontSize: '1.6rem', fontWeight: '300', color: '#fff', minHeight: '40vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 20px', lineHeight: '1.3' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: '300', color: '#fff', minHeight: '35vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px 15px', lineHeight: '1.2' }}>
                           {(audioStep >= 0 && audioStep <= 2) && `"${questions[currentIndex]?.question}"`}
                           {(audioStep >= 3 && audioStep <= 5) && <span style={{ color: '#10b981' }}>"{questions[currentIndex]?.answer}"</span>}
                           {(audioStep >= 6 && audioStep <= 8) && <span style={{ color: '#fbbf24' }}>"{questions[currentIndex]?.keywords || 'Sin etiquetas'}"</span>}
                         </div>
                      </div>
 
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', maxWidth: '400px', margin: '0 auto' }}>
-                        <div style={{ textAlign: 'left', background: '#111', padding: '20px', borderRadius: '20px', border: '1px solid #222' }}>
-                          <label style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#3b82f6', display: 'block', marginBottom: '10px' }}>⚡ Velocidad de voz: {audioSpeed}x</label>
-                          <input type="range" min="0.5" max="1.5" step="0.1" value={audioSpeed} onChange={e => setAudioSpeed(parseFloat(e.target.value))} style={{ width: '100%', height: '6px', background: '#333' }} />
+                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '350px', margin: '0 auto', width: '100%' }}>
+                        <div style={{ textAlign: 'left', background: '#111', padding: '15px', borderRadius: '16px', border: '1px solid #222' }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#3b82f6', display: 'block', marginBottom: '8px' }}>⚡ Velocidad: {audioSpeed}x</label>
+                          <input type="range" min="0.5" max="1.5" step="0.1" value={audioSpeed} onChange={e => setAudioSpeed(parseFloat(e.target.value))} style={{ width: '100%', height: '4px', background: '#333' }} />
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '40px' }}>
-                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: '#666', border: 'none', fontSize: '2.5rem', cursor: 'pointer' }}>⏮</button>
-                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: '#666', border: 'none', fontSize: '2.5rem', cursor: 'pointer' }}>⏭</button>
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '30px' }}>
+                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: '#666', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>⏮</button>
+                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: '#666', border: 'none', fontSize: '2rem', cursor: 'pointer' }}>⏭</button>
                         </div>
 
                         <button 
@@ -2152,17 +2156,17 @@
                             background: audioPlaying ? '#dc2626' : '#2563eb', 
                             color: '#fff', 
                             border: 'none', 
-                            borderRadius: '24px', 
+                            borderRadius: '16px', 
                             width: '100%', 
-                            padding: '20px', 
-                            fontSize: '1.5rem', 
+                            padding: '15px', 
+                            fontSize: '1.2rem', 
                             fontWeight: 'bold',
                             cursor: 'pointer', 
-                            boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
-                            marginTop: '20px'
+                            boxShadow: '0 5px 15px rgba(0,0,0,0.5)',
+                            marginTop: '10px'
                           }}
                         >
-                          {audioPlaying ? 'PAUSAR ESTUDIO' : 'INICIAR AUDIO'}
+                          {audioPlaying ? 'PAUSAR' : 'INICIAR AUDIO'}
                         </button>
                      </div>
                   </div>
