@@ -418,7 +418,7 @@
         const [audioPlaying, setAudioPlaying] = useState(false);
         const [audioSpeed, setAudioSpeed] = useState(1.0);
         const [audioStep, setAudioStep] = useState(0); 
-        const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0, loopId: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
+        const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0, loopId: 0 }); // step 0-3 (Qx2, Ax2)
         const ttsInstance = useRef(window.speechSynthesis);
         const silentAudioRef = useRef(null); // Audio element for keep-alive
         const heartbeatRef = useRef(null); // Interval to keep media session alive
@@ -648,7 +648,7 @@
                   } catch (e) { }
 
                   try {
-                    await tursoClient.current.execute("ALTER TABLE turso_questions ADD COLUMN keywords TEXT DEFAULT ''");
+                    await tursoClient.current.execute("ALTER TABLE turso_questions DROP COLUMN keywords");
                   } catch (e) { }
 
                   setTursoConnected(true);
@@ -709,6 +709,7 @@
             // Sincronizar motor de audio con la posición visual actual
             audioRef.current.index = currentIndex;
             audioRef.current.step = 0; 
+            setAudioStep(0);
             
             // Desbloquear reproductor Fantasma (Permiso de usuario)
             if (keepAlive) {
@@ -785,20 +786,15 @@
           const steps = [
             { text: `Pregunta: ${row.question}`, type: 'Q' },
             { text: row.question, type: 'Q' },
-            { text: row.question, type: 'Q' },
             { text: `Respuesta: ${row.answer}`, type: 'A' },
-            { text: row.answer, type: 'A' },
-            { text: row.answer, type: 'A' },
-            { text: `Palabras clave: ${row.keywords || 'Sin etiquetas'}`, type: 'K' },
-            { text: row.keywords || '', type: 'K' },
-            { text: row.keywords || '', type: 'K' }
+            { text: row.answer, type: 'A' }
           ];
 
           const currentStep = steps[audioRef.current.step];
           if (!currentStep || !currentStep.text.trim()) {
               // Saltar pasos vacíos
               audioRef.current.step++;
-              if (audioRef.current.step > 8) {
+              if (audioRef.current.step >= steps.length) {
                   audioRef.current.step = 0;
                   let nextIdx = audioRef.current.index + 1;
                   if (nextIdx >= questions.length) nextIdx = 0;
@@ -834,7 +830,7 @@
               if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
 
               audioRef.current.step++;
-              if (audioRef.current.step > 8) {
+              if (audioRef.current.step >= steps.length) {
                 audioRef.current.step = 0;
                 let nextIdx = audioRef.current.index + 1;
                 if (nextIdx >= questions.length) nextIdx = 0; 
@@ -1520,15 +1516,13 @@
                   try {
                     const queries = [];
                     for (const p of newRows) {
-                      const kw = await generateKeywords(p.question, p.answer);
                       queries.push({
-                        sql: "INSERT OR IGNORE INTO turso_questions (id, question, answer, quiz, keywords, updated_at) VALUES (?, ?, ?, ?, ?, (cast(strftime('%s','now') as int)))",
+                        sql: "INSERT OR IGNORE INTO turso_questions (id, question, answer, quiz, updated_at) VALUES (?, ?, ?, ?, (cast(strftime('%s','now') as int)))",
                         args: [
                           currentQuiz === 'General' ? (p.question + p.answer) : (currentQuiz + "_" + p.question + p.answer),
                           p.question,
                           p.answer,
-                          currentQuiz,
-                          kw
+                          currentQuiz
                         ]
                       });
                     }
@@ -2034,19 +2028,8 @@
                       <label style={{ fontSize: '0.9rem', marginBottom: '4px' }}>Auth Token:</label>
                       <input type="password" value={tursoToken} onChange={e => { setTursoToken(e.target.value); localStorage.setItem('turso_token', e.target.value); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#333', color: '#fff' }} />
                     </div>
-                    <div style={{ marginBottom: '10px', display: 'flex', flexDirection: 'column' }}>
-                      <label style={{ fontSize: '0.9rem', marginBottom: '4px' }}>OpenAI API Key (Keywords):</label>
-                      <input type="password" value={openAiKey} onChange={e => { setOpenAiKey(e.target.value); localStorage.setItem('openai_api_key', e.target.value); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #444', background: '#333', color: '#fff' }} />
-                    </div>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
                       <button onClick={() => setShowTursoConfig(false)} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#444', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Cerrar</button>
-                      <button 
-                        onClick={regenerateAllKeywords} 
-                        disabled={isBackfilling || !openAiKey}
-                        style={{ flex: 1, padding: '10px', borderRadius: '8px', background: '#0891b2', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', opacity: (isBackfilling || !openAiKey) ? 0.6 : 1 }}
-                      >
-                        🔄 Regenerar Todo
-                      </button>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '10px' }}>
                       <div style={{ textAlign: 'right' }}>
@@ -2118,11 +2101,7 @@
                       <span className="hub-title">Gestión de Cuestionarios</span>
                       <span className="hub-desc">Crear y Subir Archivos</span>
                     </button>
-                    <button className="hub-btn" onClick={() => setShowTursoConfig(true)} style={{ background: '#4b5563' }}>
-                      <span className="hub-icon">⚙️</span>
-                      <span className="hub-title">Configurar DB</span>
-                      <span className="hub-desc">Turso y OpenAI API</span>
-                    </button>
+
                     <button className="hub-btn" onClick={() => { toggleFullscreen(true); startModule('quiz'); }}>
                       <span className="hub-icon">🎯</span>
                       <span className="hub-title">Módulo 1</span>
@@ -2167,7 +2146,10 @@
               )}
 
               {gameStarted && gameMode === 'module8' && (
-                <div className="module8-container" style={{ 
+                <div 
+                  className="module8-container" 
+                  onClick={() => toggleAudio(!audioPlaying)}
+                  style={{ 
                   padding: '15px', 
                   minHeight: '100dvh', // Soporte para navegadores móviles con barras dinámicas
                   background: '#000', 
@@ -2189,34 +2171,33 @@
                    <div style={{ position: 'absolute', top: 0, right: 0, padding: '15px', zIndex: 100 }}>
                     <button 
                       className="m5-close-btn" 
-                      onClick={() => { toggleAudio(false); handleChangeModule(); }}
+                      onClick={(e) => { e.stopPropagation(); toggleAudio(false); handleChangeModule(); }}
                       style={{ color: 'rgba(255,255,255,0.15)', border: 'none', background: 'transparent', WebkitTapHighlightColor: 'transparent', outline: 'none' }}
                     >Salir ⛌</button>
                   </div>
 
                   <div className="audio-card" style={{ background: 'transparent', border: 'none', width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px', boxSizing: 'border-box' }}>
                      <div style={{ width: '100%' }}>
-                        <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: 'rgba(255,255,255,0.05)' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
+                        <h3 style={{ fontSize: '0.9rem', margin: '5px 0', color: 'rgba(255,255,255,0.15)' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
-                        <div style={{ fontSize: '1.2rem', fontWeight: '300', color: 'rgba(255,255,255,0.15)', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.2', border: 'none', background: 'transparent' }}>
+                        <div style={{ fontSize: '1.4rem', fontWeight: '400', color: 'rgba(255,255,255,0.35)', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.3', border: 'none', background: 'transparent' }}>
                           <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
-                            {audioStep < 3 ? questions[currentIndex]?.question 
-                             : audioStep < 6 ? questions[currentIndex]?.answer 
-                             : (questions[currentIndex]?.keywords || 'Sin etiquetas...')}
+                            {audioStep < 2 ? questions[currentIndex]?.question 
+                             : questions[currentIndex]?.answer}
                           </p>
                         </div>
                      </div>
 
                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxWidth: '300px', margin: '0 auto', width: '100%' }}>
-                        <div style={{ textAlign: 'left', background: 'transparent', padding: '10px', borderRadius: '12px', border: 'none' }}>
+                        <div onClick={e => e.stopPropagation()} style={{ textAlign: 'left', background: 'transparent', padding: '10px', borderRadius: '12px', border: 'none' }}>
                           <label style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'rgba(255,255,255,0.1)', display: 'block', marginBottom: '4px' }}>Velocidad: {audioSpeed}x</label>
                           <input type="range" min="0.5" max="1.5" step="0.1" value={audioSpeed} onChange={e => setAudioSpeed(parseFloat(e.target.value))} style={{ width: '100%', height: '4px', opacity: 0.2 }} />
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
-                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏮</button>
+                           <button onClick={(e) => { e.stopPropagation(); skipAudio(-1); }} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏮</button>
                            <button 
-                             onClick={() => toggleAudio(!audioPlaying)} 
+                             onClick={(e) => { e.stopPropagation(); toggleAudio(!audioPlaying); }} 
                              style={{ 
                                background: 'transparent', 
                                color: 'rgba(255,255,255,0.15)', 
@@ -2233,7 +2214,7 @@
                            >
                              {audioPlaying ? 'PAUSAR' : 'INICIAR AUDIO'}
                            </button>
-                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏭</button>
+                           <button onClick={(e) => { e.stopPropagation(); skipAudio(1); }} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏭</button>
                         </div>
                      </div>
                   </div>
@@ -2275,7 +2256,7 @@
                           >
                             {availableQuizzes.map(q => <option key={q} value={q}>{q}</option>)}
                           </select>
-                          <button onClick={() => setShowTursoConfig(true)} style={{ background: '#f3f4f6', color: '#1f2937', border: '1px solid #d1d5db', borderRadius: '8px', padding: '0 15px', cursor: 'pointer', fontWeight: 'bold' }} title="Configurar Base de Datos">⚙️</button>
+
                           <button onClick={handleDeleteQuizAction} style={{ background: '#fee2e2', color: '#b91c1c', border: '1px solid #f87171', borderRadius: '8px', padding: '0 15px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem', height: '48px', flexShrink: 0 }} title="Eliminar todo el cuestionario">🗑️</button>
                         </div>
 
@@ -2367,11 +2348,7 @@
                                   <div style={{ marginTop: '4px' }}>
                                     <strong style={{ color: '#db2777' }}>R:</strong> <span style={{ color: '#1f2937' }}>{row.answer}</span>
                                   </div>
-                                  {row.keywords && (
-                                    <div style={{ marginTop: '6px', fontSize: '0.85rem', color: '#6b7280', background: '#f3f4f6', padding: '4px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                                      🏷️ {row.keywords}
-                                    </div>
-                                  )}
+
                                 </>
                               )}
                             </div>
