@@ -739,15 +739,24 @@
           const row = questions[idxToUse];
           if (!row) return;
 
-          // Actualizar MediaSession (Pantalla bloqueada)
+          // Actualizar MediaSession (Pantalla bloqueada y barra de notificaciones)
           if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
               title: `Pregunta ${idxToUse + 1}`,
-              artist: activeQuiz,
+              artist: activeQuiz || 'Estudio Pro',
               album: 'Audio Estudio 3x3x3',
-              artwork: [{ src: 'https://cdn-icons-png.flaticon.com/512/3039/3039401.png', sizes: '512x512', type: 'image/png' }]
+              artwork: [
+                { src: 'https://cdn-icons-png.flaticon.com/512/3039/3039401.png', sizes: '512x512', type: 'image/png' },
+                { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH5QgKDBUuJz5UywAAABl0RVh0Q29tbWVudABDcmVhdGVkIHdpdGggR0lNUFeBDhcAAABPSURBVHja7cEBDQAAAMKg909tDwcUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOA3A8YAAfV953IAAAAASUVORK5CYII=', sizes: '64x64', type: 'image/png' }
+              ]
             });
             navigator.mediaSession.playbackState = 'playing';
+
+            // Configurar manejadores de botones en la notificación
+            navigator.mediaSession.setActionHandler('play', () => toggleAudio(true));
+            navigator.mediaSession.setActionHandler('pause', () => toggleAudio(false));
+            navigator.mediaSession.setActionHandler('previoustrack', () => skipAudio(-1));
+            navigator.mediaSession.setActionHandler('nexttrack', () => skipAudio(1));
           }
 
           const steps = [
@@ -768,9 +777,10 @@
               audioRef.current.step++;
               if (audioRef.current.step > 8) {
                   audioRef.current.step = 0;
-                  audioRef.current.index++;
-                  setAudioIndex(audioRef.current.index);
-                  localStorage.setItem(`audio_pos_${activeQuiz}`, audioRef.current.index);
+                  let nextIdx = audioRef.current.index + 1;
+                  if (nextIdx >= questions.length) nextIdx = 0;
+                  audioRef.current.index = nextIdx;
+                  setCurrentIndex(nextIdx);
               }
               runAudioCycle();
               return;
@@ -2119,7 +2129,7 @@
                 </div>
               )}
 
-              {gameStarted && !gameOver && gameMode === 'module8' && (
+              {gameStarted && gameMode === 'module8' && (
                 <div className="module8-container" style={{ 
                   padding: '10px', 
                   height: '100vh', 
