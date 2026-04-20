@@ -700,18 +700,18 @@
         const toggleAudio = (play) => {
           setAudioPlaying(play);
           audioRef.current.playing = play;
-          const silentAudio = document.getElementById('silent-keep-alive');
+          const keepAlive = document.getElementById('silent-keep-alive');
           
           if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
           if (play) {
-            if (silentAudio) {
-              silentAudio.volume = 0.05; // Un poco más alto para Samsung Internet
-              silentAudio.play().catch(() => {});
+            if (keepAlive) {
+              keepAlive.volume = 0.05;
+              keepAlive.play().catch(() => {});
               
               // Intentar re-reproducir si el sistema lo pausa (Eco-mode de Samsung)
-              silentAudio.onpause = () => {
-                  if (audioRef.current.playing) silentAudio.play().catch(() => {});
+              keepAlive.onpause = () => {
+                  if (audioRef.current.playing) keepAlive.play().catch(() => {});
               };
 
               heartbeatRef.current = setInterval(() => {
@@ -725,14 +725,16 @@
                           });
                       }
                   }
+                  // Forzar que el video no se detenga
+                  if (keepAlive.paused && audioRef.current.playing) keepAlive.play().catch(()=>{});
               }, 1000);
             }
             runAudioCycle();
           } else {
             ttsInstance.current.cancel();
-            if (silentAudio) {
-              silentAudio.pause();
-              silentAudio.onpause = null;
+            if (keepAlive) {
+              keepAlive.pause();
+              keepAlive.onpause = null;
               if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = 'paused';
               }
@@ -2857,8 +2859,8 @@
               }
 
               
-              {/* Elemento de Audio Fantasma para mantener vivo el sistema en móviles (Samsung/Xiaomi) */}
-              <audio id="silent-keep-alive" loop src={silentWav} style={{ display: 'none' }} />
+              {/* Elemento de Video Fantasma para mantener vivo el sistema en móviles (Samsung/Chrome) */}
+              <video id="silent-keep-alive" loop playsInline src={silentWav} style={{ position: 'fixed', top: 0, left: 0, width: '1px', height: '1px', opacity: 0.01, pointerEvents: 'none', zIndex: -1 }} />
             </div>
           </div>
         );
