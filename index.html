@@ -2158,8 +2158,8 @@
 
               {gameStarted && gameMode === 'module8' && (
                 <div className="module8-container" style={{ 
-                  padding: '10px', 
-                  height: '100vh', 
+                  padding: '15px', 
+                  minHeight: '100dvh', // Soporte para navegadores móviles con barras dinámicas
                   background: '#000', 
                   margin: '0', 
                   textAlign: 'center', 
@@ -2171,12 +2171,12 @@
                   bottom: 0, 
                   zIndex: 9999,
                   overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
+                  display: 'grid',
+                  placeItems: 'center',
+                  alignContent: 'center',
                   WebkitOverflowScrolling: 'touch'
                 }}>
-                   <div className="m5-top-layout" style={{ position: 'sticky', top: 0, width: '100%', display: 'flex', justifyContent: 'flex-end', padding: '10px', background: '#000', zIndex: 10, boxSizing: 'border-box' }}>
+                   <div style={{ position: 'absolute', top: 0, right: 0, padding: '15px', zIndex: 100 }}>
                     <button 
                       className="m5-close-btn" 
                       onClick={() => { toggleAudio(false); handleChangeModule(); }}
@@ -2184,7 +2184,7 @@
                     >Salir ⛌</button>
                   </div>
 
-                  <div className="audio-card" style={{ background: 'transparent', padding: '5px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '10px', width: '100%', maxWidth: '450px', boxSizing: 'border-box' }}>
+                  <div className="audio-card" style={{ background: 'transparent', width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '20px', padding: '10px', boxSizing: 'border-box' }}>
                      <div style={{ width: '100%' }}>
                         <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: '#9ca3af' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
@@ -2816,7 +2816,7 @@
                 )
               }
 
-              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module6') ? 'none' : '' }}>
+              <footer className="app-footer" style={{ display: (gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module6' || gameMode === 'module8') ? 'none' : '' }}>
                 <span>
                   Carga tu Excel y convierte el estudio en un juego interactivo.
                 </span>
