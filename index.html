@@ -701,6 +701,7 @@
           setAudioPlaying(play);
           audioRef.current.playing = play;
           const keepAlive = document.getElementById('silent-keep-alive');
+          const cloudAudio = document.getElementById('cloud-tts-audio'); // Obsolete, keeping for safety removal later
           
           if (heartbeatRef.current) clearInterval(heartbeatRef.current);
 
@@ -708,32 +709,29 @@
             // Sincronizar motor de audio con la posición visual actual
             audioRef.current.index = currentIndex;
             audioRef.current.step = 0; 
-
+            
+            // Desbloquear reproductor Fantasma (Permiso de usuario)
             if (keepAlive) {
-              keepAlive.volume = 0.05;
-              keepAlive.play().catch(() => {});
-              
-              // TRUCO: Forzar un ciclo de vida constante
-              heartbeatRef.current = setInterval(() => {
-                  if (audioRef.current.playing) {
-                      if ('mediaSession' in navigator) {
-                          navigator.mediaSession.playbackState = 'playing';
-                      }
-                      if (keepAlive.paused) keepAlive.play().catch(() => {});
-                  }
-                  // Forzar que el video no se detenga
-                  if (keepAlive.paused && audioRef.current.playing) keepAlive.play().catch(()=>{});
-              }, 1000);
+                keepAlive.volume = 0.05;
+                keepAlive.play().catch(()=>{});
             }
+
+            // TRUCO: Forzar un ciclo de vida constante y evitar que el TTS de Android muera
+            heartbeatRef.current = setInterval(() => {
+                if (audioRef.current.playing) {
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = 'playing';
+                    }
+                    if (keepAlive && keepAlive.paused) keepAlive.play().catch(() => {});
+                    // Mantiene el enlace con el motor de voz de Android activo
+                    window.speechSynthesis.resume();
+                }
+            }, 5000); // 5 segundos es ideal para el watchdog de TTS
+
             runAudioCycle();
           } else {
             // Cancelar TTS
             ttsInstance.current.cancel();
-            const cloudAudio = document.getElementById('cloud-tts-audio');
-            if (cloudAudio) {
-                cloudAudio.pause();
-                cloudAudio.src = "";
-            }
             if (keepAlive) {
               keepAlive.pause();
               if ('mediaSession' in navigator) {
@@ -796,7 +794,7 @@
 
           const currentStep = steps[audioRef.current.step];
           if (!currentStep || !currentStep.text.trim()) {
-              // Saltar pasos vacíos (ej keywords no generadas)
+              // Saltar pasos vacíos
               audioRef.current.step++;
               if (audioRef.current.step > 8) {
                   audioRef.current.step = 0;
@@ -809,76 +807,52 @@
               return;
           }
 
-          // === HACK: Reemplazar SpeechSynthesis por Google Cloud TTS (Audio Real) ===
-          // El motor interno de Android corta SpeechSynthesis al apagar la pantalla.
-          // Los archivos MP3 jugados en un elemento `<audio>` no se cortan.
-          const cloudAudio = document.getElementById('cloud-tts-audio');
-          if (!cloudAudio) return;
-
-          audioRef.current.startTime = Date.now();
-
-          // Dividir texto para no superar el límite de 200 caracteres de la API
-          const textToSpeak = currentStep.text.replace(/#/g, ''); 
-          const chunks = textToSpeak.match(/.{1,180}(\s|$)/g) || [textToSpeak];
-          let chunkIdx = 0;
-
-          const playNextChunk = () => {
-              if (chunkIdx >= chunks.length || !audioRef.current.playing) {
-                  // Finalizó la lectura de esta repetición
-                  const duration = Date.now() - audioRef.current.startTime;
-                  audioRef.current.lastDuration = duration;
-
-                  // Iniciar silencio 1:1
-                  const delay = duration; 
-                  setTimeout(() => {
-                      if (!audioRef.current.playing) return;
-                      
-                      const keepAlive = document.getElementById('silent-keep-alive');
-                      if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
-
-                      audioRef.current.step++;
-                      if (audioRef.current.step > 8) {
-                          audioRef.current.step = 0;
-                          let nextIdx = audioRef.current.index + 1;
-                          if (nextIdx >= questions.length) {
-                              nextIdx = 0; 
-                          }
-                          audioRef.current.index = nextIdx;
-                          setCurrentIndex(nextIdx);
-                      }
-                      setAudioStep(audioRef.current.step);
-                      runAudioCycle();
-                  }, delay);
-                  return;
-              }
-
-              const encodedText = encodeURIComponent(chunks[chunkIdx].trim());
-              if (!encodedText) {
-                  chunkIdx++;
-                  playNextChunk();
-                  return;
-              }
-
-              cloudAudio.src = `https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodedText}`;
-              cloudAudio.playbackRate = audioSpeed;
-              
-              cloudAudio.onended = () => {
-                  chunkIdx++;
-                  playNextChunk();
-              };
-              
-              cloudAudio.onerror = () => {
-                  chunkIdx++;
-                  playNextChunk();
-              };
-
-              cloudAudio.play().catch(e => {
-                  chunkIdx++;
-                  playNextChunk();
-              });
+          // Restaurado: Uso del motor interno combinado con el Watchdog y Media Session
+          const utterance = new SpeechSynthesisUtterance(currentStep.text.replace(/#/g, ''));
+          utterance.lang = 'es-ES';
+          utterance.rate = audioSpeed;
+          
+          utterance.onstart = () => {
+            audioRef.current.startTime = Date.now();
           };
 
-          playNextChunk();
+          utterance.onend = () => {
+            if (!audioRef.current.playing) return;
+            
+            // Medir cuánto tardó el audio en hablar
+            let duration = Date.now() - audioRef.current.startTime;
+            if (duration < 500) duration = 2000; // Seguridad contra saltos rápidos extraños
+
+            audioRef.current.lastDuration = duration;
+
+            setTimeout(() => {
+              if (!audioRef.current.playing) return;
+              
+              const keepAlive = document.getElementById('silent-keep-alive');
+              if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
+
+              audioRef.current.step++;
+              if (audioRef.current.step > 8) {
+                audioRef.current.step = 0;
+                let nextIdx = audioRef.current.index + 1;
+                if (nextIdx >= questions.length) nextIdx = 0; 
+                audioRef.current.index = nextIdx;
+                setCurrentIndex(nextIdx);
+              }
+              setAudioStep(audioRef.current.step);
+              runAudioCycle();
+            }, duration); 
+          };
+
+          utterance.onerror = (e) => {
+              console.error("TTS Error:", e);
+              // Retry on another bug where engine crashes
+              if (audioRef.current.playing) {
+                  setTimeout(() => runAudioCycle(), 1000);
+              }
+          };
+
+          ttsInstance.current.speak(utterance);
         };
 
         const syncToTurso = async (id, field, value) => {
