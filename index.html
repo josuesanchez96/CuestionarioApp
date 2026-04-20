@@ -420,7 +420,10 @@
         const [audioStep, setAudioStep] = useState(0); 
         const audioRef = useRef({ playing: false, index: 0, step: 0, lastDuration: 2000, startTime: 0 }); // step 0-8 (Qx3, Ax3, Kx3)
         const ttsInstance = useRef(window.speechSynthesis);
-        const silentAudioRef = useRef(null); // Keep-alive audio context
+        const silentAudioRef = useRef(null); // Audio element for keep-alive
+        
+        // Archivo WAV de 1 segundo de silencio absoluto en Base64
+        const silentWav = "data:audio/wav;base64,UklGRigAAABXQVZFRm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAP8A/wD/";
 
         const generateKeywords = async (question, answer) => {
           if (!openAiKey) return "";
@@ -697,28 +700,22 @@
           setAudioPlaying(play);
           audioRef.current.playing = play;
           if (play) {
-            // TRUCO: Crear un contexto de audio silencioso para mantener vivo el proceso en segundo plano
+            // TRUCO DEFINITIVO: Usar un elemento AUDIO real con un archivo de silencio 
+            // Esto obliga a Android/iOS a mostrar los controles multimedia en la barra de notificaciones.
             try {
               if (!silentAudioRef.current) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                const ctx = new AudioContext();
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-                gainNode.gain.value = 0.001; // Casi inaudible
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-                oscillator.start();
-                silentAudioRef.current = ctx;
-              } else if (silentAudioRef.current.state === 'suspended') {
-                silentAudioRef.current.resume();
+                const audio = new Audio(silentWav);
+                audio.loop = true;
+                silentAudioRef.current = audio;
               }
-            } catch (e) { console.warn("Silent audio keep-alive failed:", e); }
+              silentAudioRef.current.play().catch(e => console.warn("Audio play failed:", e));
+            } catch (e) { console.warn("Keep-alive audio failed:", e); }
             
             runAudioCycle();
           } else {
             ttsInstance.current.cancel();
-            if (silentAudioRef.current && silentAudioRef.current.state !== 'suspended') {
-              silentAudioRef.current.suspend();
+            if (silentAudioRef.current) {
+              silentAudioRef.current.pause();
             }
           }
         };
