@@ -1717,6 +1717,13 @@
         }
 
         const startModule = (mode, forceReset = false, filterMode = 'all') => {
+          if (mode === 'module8') {
+              const docEl = document.documentElement;
+              if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+              else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
+              else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen().catch(() => {});
+          }
+
           if (mode !== 'module7' && mode !== 'module8' && rawRows.length === 0) {
             alert(`No hay preguntas cargadas en el cuestionario activo ("${activeQuiz}"). Entra al Módulo 7 para gestionarlo.`);
             return;
@@ -1791,15 +1798,9 @@
               setScore(0);
               setCorrectCount(0);
               setWrongCount(0);
+              setWrongCount(0);
               setFailedQuestions([]);
               setGameOver(false);
-              // Modo pantalla completa obligatorio para el stealth mode del Módulo 6 (Audio)
-              if (mode === 'module8') {
-                  const docEl = document.documentElement;
-                  if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
-                  else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen().catch(() => {});
-                  else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen().catch(() => {});
-              }
             } else {
               audioRef.current.index = currentIndex;
             }
@@ -2189,7 +2190,7 @@
                     <button 
                       className="m5-close-btn" 
                       onClick={() => { toggleAudio(false); handleChangeModule(); }}
-                      style={{ color: 'rgba(255,255,255,0.15)', border: 'none', background: 'transparent' }}
+                      style={{ color: 'rgba(255,255,255,0.15)', border: 'none', background: 'transparent', WebkitTapHighlightColor: 'transparent', outline: 'none' }}
                     >Salir ⛌</button>
                   </div>
 
@@ -2198,8 +2199,10 @@
                         <h3 style={{ fontSize: '0.8rem', margin: '5px 0', color: 'rgba(255,255,255,0.05)' }}>Pregunta {currentIndex + 1} / {questions.length}</h3>
                         
                         <div style={{ fontSize: '1.2rem', fontWeight: '300', color: 'rgba(255,255,255,0.15)', minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 10px', lineHeight: '1.2', border: 'none', background: 'transparent' }}>
-                          <p style={{ margin: 0 }}>
-                              {audioStep < 3 ? 'Escuchando Pregunta...' : audioStep < 6 ? 'Escuchando Respuesta...' : 'Memorizando Claves...'}
+                          <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
+                            {audioStep < 3 ? questions[currentIndex]?.question 
+                             : audioStep < 6 ? questions[currentIndex]?.answer 
+                             : (questions[currentIndex]?.keywords || 'Sin etiquetas...')}
                           </p>
                         </div>
                      </div>
@@ -2211,7 +2214,7 @@
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '20px' }}>
-                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏮</button>
+                           <button onClick={() => skipAudio(-1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏮</button>
                            <button 
                              onClick={() => toggleAudio(!audioPlaying)} 
                              style={{ 
@@ -2223,12 +2226,14 @@
                                fontSize: '0.9rem', 
                                fontWeight: '600',
                                cursor: 'pointer', 
-                               minWidth: '140px'
+                               minWidth: '140px',
+                               WebkitTapHighlightColor: 'transparent', 
+                               outline: 'none'
                              }}
                            >
                              {audioPlaying ? 'PAUSAR' : 'INICIAR AUDIO'}
                            </button>
-                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer' }}>⏭</button>
+                           <button onClick={() => skipAudio(1)} style={{ background: 'transparent', color: 'rgba(255,255,255,0.15)', border: 'none', fontSize: '1.8rem', cursor: 'pointer', WebkitTapHighlightColor: 'transparent', outline: 'none' }}>⏭</button>
                         </div>
                      </div>
                   </div>
