@@ -707,30 +707,20 @@
           if (play) {
             // Sincronizar motor de audio con la posición visual actual
             audioRef.current.index = currentIndex;
-            audioRef.current.step = 0; // Empezar desde el inicio de la pregunta actual
+            audioRef.current.step = 0; 
 
             if (keepAlive) {
               keepAlive.volume = 0.05;
               keepAlive.play().catch(() => {});
               
-              // Intentar re-reproducir si el sistema lo pausa (Eco-mode de Samsung)
-              keepAlive.onpause = () => {
-                  if (audioRef.current.playing) keepAlive.play().catch(() => {});
-              };
-
+              // TRUCO: Forzar un ciclo de vida constante
               heartbeatRef.current = setInterval(() => {
-                  if ('mediaSession' in navigator) {
-                      navigator.mediaSession.playbackState = 'playing';
-                      if (navigator.mediaSession.setPositionState) {
-                          navigator.mediaSession.setPositionState({
-                              duration: 3600,
-                              playbackRate: 1,
-                              position: Math.floor(Date.now() / 1000) % 3600
-                          });
+                  if (audioRef.current.playing) {
+                      if ('mediaSession' in navigator) {
+                          navigator.mediaSession.playbackState = 'playing';
                       }
+                      if (keepAlive.paused) keepAlive.play().catch(() => {});
                   }
-                  // Forzar que el video no se detenga
-                  if (keepAlive.paused && audioRef.current.playing) keepAlive.play().catch(()=>{});
               }, 1000);
             }
             runAudioCycle();
@@ -738,7 +728,6 @@
             ttsInstance.current.cancel();
             if (keepAlive) {
               keepAlive.pause();
-              keepAlive.onpause = null;
               if ('mediaSession' in navigator) {
                 navigator.mediaSession.playbackState = 'paused';
               }
@@ -827,9 +816,15 @@
             const duration = Date.now() - audioRef.current.startTime;
             audioRef.current.lastDuration = duration;
 
+            // Usar una función de espera que no se congele
+            const delay = duration; 
             setTimeout(() => {
               if (!audioRef.current.playing) return;
               
+              // Asegurar que el video sigue vivo antes del siguiente TTS
+              const keepAlive = document.getElementById('silent-keep-alive');
+              if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
+
               audioRef.current.step++;
               if (audioRef.current.step > 8) {
                 audioRef.current.step = 0;
