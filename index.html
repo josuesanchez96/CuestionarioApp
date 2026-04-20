@@ -721,11 +721,19 @@
                       }
                       if (keepAlive.paused) keepAlive.play().catch(() => {});
                   }
+                  // Forzar que el video no se detenga
+                  if (keepAlive.paused && audioRef.current.playing) keepAlive.play().catch(()=>{});
               }, 1000);
             }
             runAudioCycle();
           } else {
+            // Cancelar TTS
             ttsInstance.current.cancel();
+            const cloudAudio = document.getElementById('cloud-tts-audio');
+            if (cloudAudio) {
+                cloudAudio.pause();
+                cloudAudio.src = "";
+            }
             if (keepAlive) {
               keepAlive.pause();
               if ('mediaSession' in navigator) {
@@ -801,54 +809,76 @@
               return;
           }
 
-          const utterance = new SpeechSynthesisUtterance(currentStep.text);
-          utterance.lang = 'es-ES';
-          utterance.rate = audioSpeed;
-          
-          utterance.onstart = () => {
-            audioRef.current.startTime = Date.now();
-          };
+          // === HACK: Reemplazar SpeechSynthesis por Google Cloud TTS (Audio Real) ===
+          // El motor interno de Android corta SpeechSynthesis al apagar la pantalla.
+          // Los archivos MP3 jugados en un elemento `<audio>` no se cortan.
+          const cloudAudio = document.getElementById('cloud-tts-audio');
+          if (!cloudAudio) return;
 
-          utterance.onend = () => {
-            if (!audioRef.current.playing) return;
-            
-            // Medir cuánto tardó el audio en hablar
-            const duration = Date.now() - audioRef.current.startTime;
-            audioRef.current.lastDuration = duration;
+          audioRef.current.startTime = Date.now();
 
-            // Usar una función de espera que no se congele
-            const delay = duration; 
-            setTimeout(() => {
-              if (!audioRef.current.playing) return;
-              
-              // Asegurar que el video sigue vivo antes del siguiente TTS
-              const keepAlive = document.getElementById('silent-keep-alive');
-              if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
+          // Dividir texto para no superar el límite de 200 caracteres de la API
+          const textToSpeak = currentStep.text.replace(/#/g, ''); 
+          const chunks = textToSpeak.match(/.{1,180}(\s|$)/g) || [textToSpeak];
+          let chunkIdx = 0;
 
-              audioRef.current.step++;
-              if (audioRef.current.step > 8) {
-                audioRef.current.step = 0;
-                let nextIdx = audioRef.current.index + 1;
-                
-                // BUCLE INFINITO: Si llegamos al final, reiniciamos a 0
-                if (nextIdx >= questions.length) {
-                    nextIdx = 0; 
-                }
-                
-                audioRef.current.index = nextIdx;
-                setCurrentIndex(nextIdx);
+          const playNextChunk = () => {
+              if (chunkIdx >= chunks.length || !audioRef.current.playing) {
+                  // Finalizó la lectura de esta repetición
+                  const duration = Date.now() - audioRef.current.startTime;
+                  audioRef.current.lastDuration = duration;
+
+                  // Iniciar silencio 1:1
+                  const delay = duration; 
+                  setTimeout(() => {
+                      if (!audioRef.current.playing) return;
+                      
+                      const keepAlive = document.getElementById('silent-keep-alive');
+                      if (keepAlive && keepAlive.paused) keepAlive.play().catch(()=>{});
+
+                      audioRef.current.step++;
+                      if (audioRef.current.step > 8) {
+                          audioRef.current.step = 0;
+                          let nextIdx = audioRef.current.index + 1;
+                          if (nextIdx >= questions.length) {
+                              nextIdx = 0; 
+                          }
+                          audioRef.current.index = nextIdx;
+                          setCurrentIndex(nextIdx);
+                      }
+                      setAudioStep(audioRef.current.step);
+                      runAudioCycle();
+                  }, delay);
+                  return;
               }
-              setAudioStep(audioRef.current.step);
-              runAudioCycle();
-            }, duration); // Silencio dinámico: 1:1 con el tiempo de habla
+
+              const encodedText = encodeURIComponent(chunks[chunkIdx].trim());
+              if (!encodedText) {
+                  chunkIdx++;
+                  playNextChunk();
+                  return;
+              }
+
+              cloudAudio.src = `https://translate.googleapis.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodedText}`;
+              cloudAudio.playbackRate = audioSpeed;
+              
+              cloudAudio.onended = () => {
+                  chunkIdx++;
+                  playNextChunk();
+              };
+              
+              cloudAudio.onerror = () => {
+                  chunkIdx++;
+                  playNextChunk();
+              };
+
+              cloudAudio.play().catch(e => {
+                  chunkIdx++;
+                  playNextChunk();
+              });
           };
 
-          utterance.onerror = (e) => {
-              console.error("TTS Error:", e);
-              toggleAudio(false);
-          };
-
-          ttsInstance.current.speak(utterance);
+          playNextChunk();
         };
 
         const syncToTurso = async (id, field, value) => {
@@ -2861,6 +2891,9 @@
               
               {/* Elemento de Video Fantasma para mantener vivo el sistema en móviles (Samsung/Chrome) */}
               <video id="silent-keep-alive" loop playsInline src={silentWav} style={{ position: 'fixed', top: 0, left: 0, width: '1px', height: '1px', opacity: 0.01, pointerEvents: 'none', zIndex: -1 }} />
+              
+              {/* Elemento de Audio Nube para evitar bloqueo TTS de Android */}
+              <audio id="cloud-tts-audio" style={{ display: 'none' }} />
             </div>
           </div>
         );
