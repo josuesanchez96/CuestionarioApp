@@ -1334,13 +1334,13 @@
           };
 
           const handleVisibilityChange = () => {
-            const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module8';
+            const isTargetMode = gameMode === 'module2' || gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module8';
             if (document.visibilityState === 'visible' && gameStarted && !gameOver && isTargetMode) {
               requestWakeLock();
             }
           };
 
-          const isTargetMode = gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module5' || gameMode === 'module8';
+          const isTargetMode = gameMode === 'module2' || gameMode === 'module3' || gameMode === 'module4' || gameMode === 'module8';
           if (gameStarted && !gameOver && isTargetMode) {
             requestWakeLock();
             document.addEventListener('visibilitychange', handleVisibilityChange);
