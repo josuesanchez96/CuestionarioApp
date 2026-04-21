@@ -1360,7 +1360,7 @@
         }, [revealed, currentIndex]);
 
         useEffect(() => {
-          const isNavModule = ['module3', 'module4', 'module5', 'module6', 'module8'].includes(gameMode);
+          const isNavModule = ['module3', 'module4', 'module5', 'module6'].includes(gameMode);
           if (!isNavModule || !gameStarted || gameOver) return;
 
           const handleKeyDown = (e) => {
@@ -2201,7 +2201,18 @@
                      {aodTime}
                   </div>
 
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '420px', paddingTop: '160px', paddingBottom: '250px', boxSizing: 'border-box' }}>
+                  <div 
+                    onClick={() => {
+                        const isCurrentlyQuestion = audioStep < audioRepeats;
+                        const nextStep = isCurrentlyQuestion ? audioRepeats : 0;
+                        audioRef.current.step = nextStep;
+                        setAudioStep(nextStep);
+                        if (audioRef.current.playing) {
+                            ttsInstance.current.cancel();
+                            runAudioCycle();
+                        }
+                    }}
+                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', maxWidth: '420px', paddingTop: '160px', paddingBottom: '250px', boxSizing: 'border-box', cursor: 'pointer', WebkitTapHighlightColor: 'transparent' }}>
                      <div style={{ fontSize: '1.4rem', fontWeight: '400', color: 'rgba(255,255,255,0.3)', textAlign: 'center', lineHeight: '1.4', width: '100%' }}>
                         <p style={{ margin: 0, whiteSpace: 'pre-line' }}>
                           {audioStep < audioRepeats ? questions[currentIndex]?.question 
