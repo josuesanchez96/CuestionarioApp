@@ -2605,6 +2605,17 @@ body {
   transform: scale(0.98);
 }
 
+.m6-choice-btn.m6-info {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.m6-choice-btn.m6-info:active {
+  background: #e0f2fe;
+  transform: scale(0.98);
+}
+
 .m6-choice-btn.m6-cancel {
   background: transparent;
   color: #ed4956;

@@ -1789,8 +1789,8 @@
               } else if (actualFilter === 'knownOnly') {
                 filteredRows = rawRows.filter(row => likedQuestions.includes(row.question + row.answer));
               }
-              const shuffled = shuffleArray(filteredRows);
-              setQuestions(shuffled);
+              const finalQuestions = actualFilter === 'ordered' ? [...filteredRows] : shuffleArray(filteredRows);
+              setQuestions(finalQuestions);
               setCurrentIndex(0);
               setScore(0);
               setCorrectCount(0);
@@ -2908,6 +2908,13 @@
                         >
                           🔄 Repasar todo
                           <small>({rawRows.length} preguntas)</small>
+                        </button>
+                        <button
+                          className="m6-choice-btn m6-info"
+                          onClick={() => startModule(gameMode, true, 'ordered')}
+                        >
+                          📈 Repasar en orden
+                          <small>(Ascendente)</small>
                         </button>
                         <button
                           className="m6-choice-btn m6-cancel"
